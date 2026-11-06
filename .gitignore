@@ -1,0 +1,8 @@
+# Datos del cliente (precios, costos, stock): no van a un repo público
+*.xls
+*.xlsx
+*.csv
+
+# Archivos de bloqueo de LibreOffice / Office
+.~lock.*#
+~$*

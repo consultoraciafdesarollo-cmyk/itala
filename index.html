@@ -1,0 +1,1342 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Relevamiento Repuestos ITALA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: barra navy fija con pestañas + área de trabajo; tablas densas para escritorio, carga de conteos pensada para celular */
+:root{
+  --bg:#F2F5F9; --surface:#FFFFFF; --surface2:#E9EEF5; --ink:#0E1F33; --muted:#5A6B80; --line:#D6DEE8;
+  --brand:#1E4A82; --brand2:#2D6CB8; --gold:#F5A623; --gold-ink:#8A5A00; --gold-soft:#FDF1DC;
+  --ok:#1F7A52; --ok-soft:#E1F3EA; --bad:#B8322B; --bad-soft:#FBE6E4; --info:#2D6CB8; --info-soft:#E3EDF9;
+  --navy:#0E1F33; --navy-ink:#FFFFFF; --navy-muted:#9FB2C9;
+  --f-display:"Montserrat",system-ui,sans-serif; --f-body:"Open Sans",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0A1422; --surface:#111F33; --surface2:#182A43; --ink:#E6EDF6; --muted:#93A4BA; --line:#24384F;
+  --brand:#7FB0EA; --brand2:#5C97DB; --gold:#F5A623; --gold-ink:#F7BE5E; --gold-soft:#3A2C12;
+  --ok:#4CC08A; --ok-soft:#123326; --bad:#F07A70; --bad-soft:#3A1A18; --info:#7FB0EA; --info-soft:#152A45;
+  --navy:#07101C; --navy-ink:#FFFFFF; --navy-muted:#8FA3BC; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1422; --surface:#111F33; --surface2:#182A43; --ink:#E6EDF6; --muted:#93A4BA; --line:#24384F;
+  --brand:#7FB0EA; --brand2:#5C97DB; --gold:#F5A623; --gold-ink:#F7BE5E; --gold-soft:#3A2C12;
+  --ok:#4CC08A; --ok-soft:#123326; --bad:#F07A70; --bad-soft:#3A1A18; --info:#7FB0EA; --info-soft:#152A45;
+  --navy:#07101C; --navy-ink:#FFFFFF; --navy-muted:#8FA3BC; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--navy);color:var(--navy-ink);overflow:hidden}
+header.top::after{content:"";position:absolute;right:-40px;top:0;bottom:0;width:180px;background:var(--gold);transform:skewX(-28deg);opacity:.95;pointer-events:none}
+.top-row{display:flex;align-items:center;gap:16px;padding-block:12px 6px;position:relative;z-index:1;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+.eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--navy-muted)}
+.brand h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:-.01em;text-wrap:balance}
+.status{margin-left:auto;margin-right:170px;display:flex;gap:14px;flex-wrap:wrap;font-family:var(--f-mono);font-size:11px;color:var(--navy-muted)}
+.status b{color:var(--navy-ink);font-weight:500}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--navy-muted);margin-right:6px;vertical-align:1px}
+.dot.on{background:#4CC08A}.dot.warn{background:var(--gold)}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;position:relative;z-index:1;scrollbar-width:none;margin-right:150px}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{color:var(--navy-muted);text-decoration:none;font-family:var(--f-display);font-weight:600;font-size:13px;padding:9px 12px 10px;border-bottom:3px solid transparent;white-space:nowrap}
+nav.tabs a:hover{color:var(--navy-ink)}
+nav.tabs a[aria-current="page"]{color:var(--navy-ink);border-bottom-color:var(--gold)}
+nav.tabs a .n{font-family:var(--f-mono);font-size:10.5px;background:rgba(255,255,255,.12);padding:1px 6px;border-radius:9px;margin-left:6px}
+@media (max-width:700px){header.top::after{width:60px;right:-30px}.status{margin-right:40px;width:100%;margin-left:0}nav.tabs{margin-right:20px}}
+main{padding-block:20px 60px;max-width:1320px;margin:0 auto}
+section.view{display:flex;flex-direction:column;gap:18px}
+h2{font-family:var(--f-display);font-weight:700;font-size:20px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h3{font-family:var(--f-display);font-weight:600;font-size:14.5px;margin:0}
+.lead{color:var(--muted);margin:4px 0 0;max-width:72ch}
+.label{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.panel-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.panel-head .sp{margin-left:auto}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi .v{font-family:var(--f-display);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .s{color:var(--muted);font-size:12.5px}
+.kpi.gold{border-top:3px solid var(--gold)}.kpi.ok{border-top:3px solid var(--ok)}.kpi.bad{border-top:3px solid var(--bad)}.kpi.info{border-top:3px solid var(--info)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:900px){.cols2{grid-template-columns:1fr}}
+.cols2>*{min-width:0}
+.bar{display:flex;height:14px;border-radius:3px;overflow:hidden;background:var(--surface2)}
+.bar span{display:block;height:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.c-ok{background:var(--ok)}.c-gold{background:var(--gold)}.c-mut{background:var(--line)}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-weight:500;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2);position:sticky;top:0;white-space:nowrap}
+th.sortable{cursor:pointer}th.sortable:hover{color:var(--ink)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.cod{font-family:var(--f-mono);font-size:12px;white-space:nowrap}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--surface2)}
+tr.anulada td{color:var(--muted);text-decoration:line-through}
+tbody tr:last-child td{border-bottom:0}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.p-pend{background:var(--surface2);color:var(--muted)}
+.p-curso{background:var(--gold-soft);color:var(--gold-ink)}
+.p-rel{background:var(--ok-soft);color:var(--ok)}
+.p-bad{background:var(--bad-soft);color:var(--bad)}
+.p-info{background:var(--info-soft);color:var(--info)}
+.neg{color:var(--bad);font-weight:600}.pos{color:var(--info);font-weight:600}.zero{color:var(--ok);font-weight:600}
+.muted{color:var(--muted)}.small{font-size:12px}.mono{font-family:var(--f-mono);font-size:12px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:14px;padding:5px 11px;font-size:12.5px;cursor:pointer;font-family:var(--f-body)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip .n{font-family:var(--f-mono);font-size:11px;opacity:.75;margin-left:4px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;min-width:0}
+input:focus,select:focus,textarea:focus,button:focus-visible,.chip:focus-visible,a:focus-visible{outline:2px solid var(--brand2);outline-offset:1px}
+.search{flex:1 1 220px}
+button.btn{font-family:var(--f-display);font-weight:600;font-size:13px;border-radius:var(--r);padding:8px 14px;cursor:pointer;border:1px solid var(--ink);background:transparent;color:var(--ink);white-space:nowrap}
+button.btn.primary{background:var(--gold);border-color:var(--gold);color:#1B1300}
+button.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+button.btn.danger{border-color:var(--bad);color:var(--bad)}
+button.btn.sm{padding:4px 9px;font-size:12px}
+button.btn:disabled{opacity:.45;cursor:not-allowed}
+button.link{background:none;border:0;color:var(--brand2);cursor:pointer;padding:0;font:inherit;text-decoration:underline}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.notice{border-radius:var(--r);padding:10px 12px;font-size:13px;border:1px solid}
+.notice.warn{background:var(--gold-soft);border-color:var(--gold);color:var(--ink)}
+.notice.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
+.notice.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ink)}
+.notice.info{background:var(--info-soft);border-color:var(--info);color:var(--ink)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+/* Carga */
+.scan-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.scan-grid{grid-template-columns:1fr}}
+.scan-input{font-family:var(--f-mono);font-size:20px;padding:12px 14px;width:100%;border-width:2px}
+.item-card{border:1px solid var(--line);border-left:4px solid var(--brand2);border-radius:var(--r);padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.item-card .cod{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.item-card .desc{font-family:var(--f-display);font-weight:600;font-size:16px}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.facts div{background:var(--surface2);border-radius:4px;padding:6px 8px}
+.facts b{display:block;font-family:var(--f-display);font-size:17px;font-variant-numeric:tabular-nums}
+.row3{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media (max-width:520px){.row3{grid-template-columns:1fr 1fr}.row3 .field:last-child{grid-column:1/-1}}
+.qty{font-size:20px;font-family:var(--f-display);font-weight:700;text-align:center}
+.cands{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r);max-height:320px;overflow:auto;background:var(--surface)}
+.cands button{display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:10px;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 10px;cursor:pointer;color:var(--ink);font:inherit}
+.cands button:hover,.cands button:focus{background:var(--surface2)}
+/* Drawer */
+.drawer-bg{position:fixed;inset:0;background:rgba(5,12,22,.45);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--bg);z-index:21;overflow:auto;border-left:1px solid var(--line);padding:calc(16px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(30px + env(safe-area-inset-bottom,0px)) 18px;display:flex;flex-direction:column;gap:14px}
+.drawer .close{position:sticky;top:0;align-self:flex-end}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 32px));max-height:85vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);z-index:31;padding:18px;display:flex;flex-direction:column;gap:12px}
+.modal-bg{position:fixed;inset:0;background:rgba(5,12,22,.5);z-index:30}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:var(--r);z-index:40;font-size:13.5px;max-width:calc(100% - 32px)}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;background:var(--surface)}
+.timeline{display:flex;flex-direction:column}
+.ev{display:grid;grid-template-columns:120px 26px minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.ev:last-child{border-bottom:0}
+.ev .when{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);padding-top:2px}
+.ev .ico{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:10.5px;font-weight:500}
+.ico.imp{background:var(--info-soft);color:var(--info)}.ico.cnt{background:var(--gold-soft);color:var(--gold-ink)}.ico.aj{background:var(--ok-soft);color:var(--ok)}.ico.an{background:var(--bad-soft);color:var(--bad)}
+@media (max-width:520px){.ev{grid-template-columns:26px minmax(0,1fr)}.ev .when{grid-column:2;order:3}}
+.more{display:flex;justify-content:center;padding:10px}
+.cb{width:16px;height:16px;accent-color:var(--brand)}
+.scan-wrap{display:flex;gap:8px;align-items:stretch}
+.scan-wrap .scan-input{flex:1 1 auto;min-width:0}
+.btn-foto{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:var(--f-display);font-weight:600;font-size:13px;border-radius:var(--r);padding:0 14px;cursor:pointer;background:var(--ink);color:var(--surface);border:1px solid var(--ink);white-space:nowrap}
+.btn-foto svg{width:20px;height:20px;flex:none}
+.btn-foto[aria-disabled="true"]{opacity:.45;cursor:not-allowed;pointer-events:none}
+.btn-foto:focus-within{outline:2px solid var(--brand2);outline-offset:1px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip-path:inset(50%)}
+.btn-foto .sm{display:none}
+@media (max-width:520px){.btn-foto .lg{display:none}.btn-foto .sm{display:inline}.btn-foto{padding:0 12px}}
+.etq-row{display:flex;gap:12px;align-items:center;padding:10px 12px;background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);cursor:pointer;font-weight:600;font-size:14px;user-select:none}
+.etq-row input{width:22px;height:22px;margin:0;accent-color:var(--ok);cursor:pointer;flex:none}
+.etq-row b{margin-left:auto;font-family:var(--f-display);font-size:13px;padding:3px 10px;border-radius:10px}
+.etq-row .etq-si{display:none;background:var(--ok-soft);color:var(--ok)}
+.etq-row .etq-no{background:var(--bad-soft);color:var(--bad)}
+.etq-row:has(input:checked){border-color:var(--ok);background:var(--ok-soft)}
+.etq-row:has(input:checked) .etq-si{display:inline}
+.etq-row:has(input:checked) .etq-no{display:none}
+.kpi button.link{align-self:flex-start;font-size:12.5px}
+.cascada{width:100%;max-width:780px;min-width:520px;height:auto;display:block;margin:0 auto}
+.cascada text{font-family:var(--f-body);font-size:12px}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .18s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand"><span class="eyebrow">CIAF · ITALA · Depósito de repuestos</span><h1>Relevamiento de stock</h1></div>
+      <div class="status" id="status"><span><span class="dot" id="dbdot"></span><span id="dbtxt">Conectando…</span></span></div>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </div>
+</header>
+<main class="wrap" id="main"><div class="empty">Cargando la base de relevamiento…</div></main>
+<div id="layer"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ===== CORE: parseo de Excel y cálculo de estados (sin DOM; se usa en la página y en Node) =====
+const Core = (() => {
+  const CHUNK_MAESTRO = 2500;
+  const LINEAS_POR_SESION = 900;
+
+  function hash(str) {
+    let h1 = 0xdeadbeef ^ 0, h2 = 0x41c6ce57 ^ 0;
+    for (let i = 0; i < str.length; i++) {
+      const ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+  }
+  const s = v => (v === null || v === undefined) ? '' : String(v).trim();
+  const num = v => {
+    if (typeof v === 'number') return v;
+    let t = s(v).replace(/\s/g, '');
+    if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(t); return isNaN(n) ? 0 : n;
+  };
+  const pad = n => String(n).padStart(2, '0');
+  function fmtFecha(v) {
+    if (typeof v === 'number' && v > 20000 && v < 80000) {
+      const ms = Math.round((v - 25569) * 86400) * 1000; const d = new Date(ms);
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+    }
+    if (v instanceof Date && !isNaN(v)) {
+      return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())} ${pad(v.getHours())}:${pad(v.getMinutes())}:${pad(v.getSeconds())}`;
+    }
+    const t = s(v);
+    let m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return `${m[3]}-${pad(m[2])}-${pad(m[1])} ${pad(m[4] || 0)}:${m[5] || '00'}:${m[6] || '00'}`;
+    m = t.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]} ${m[4] || '00'}:${m[5] || '00'}:${m[6] || '00'}`;
+    return t;
+  }
+  function codBarra(v) {
+    if (typeof v === 'number') return Number.isInteger(v) ? String(v) : String(v);
+    return s(v).replace(/\s+/g, '');
+  }
+  const normCod = v => s(v).toUpperCase();
+
+  // ---------- Existencias del sistema ----------
+  function parseExistencias(aoa) {
+    let h = aoa.findIndex(r => r && s(r[0]).toLowerCase() === 'articulo');
+    if (h < 0) throw new Error('No encontré la columna "Articulo" en el informe de existencias.');
+    const head = aoa[h].map(x => s(x).toLowerCase());
+    const col = (re, def) => { const i = head.findIndex(x => re.test(x)); return i < 0 ? def : i; };
+    const iD = col(/^descrip/, 1), iU = col(/^ubic/, 4), iC = col(/^clase/, 6), iP = col(/^p\.?v\.?p\.?$/, 7),
+      iCo = col(/^cost.*medio/, 8), iE = col(/^exist/, 9);
+    const items = [], vistos = new Map(), duplicados = [];
+    for (let r = h + 1; r < aoa.length; r++) {
+      const row = aoa[r]; if (!row) continue;
+      const cod = normCod(row[0]);
+      if (!cod || cod.startsWith('***')) continue;
+      const it = [cod, s(row[iD]), s(row[iU]), num(row[iE]), num(row[iCo]), num(row[iP]), s(row[iC])];
+      if (vistos.has(cod)) {
+        duplicados.push(cod);
+        const prev = items[vistos.get(cod)]; prev[3] += it[3];
+        continue;
+      }
+      vistos.set(cod, items.length); items.push(it);
+    }
+    return { items, duplicados };
+  }
+
+  // ---------- Relevamiento (Excel de conteos) ----------
+  function parseRelevamiento(aoa, existe) {
+    let h = aoa.findIndex(r => r && r.some(x => s(x).toLowerCase() === 'id') && r.some(x => /^c[oó]digo$/i.test(s(x))));
+    if (h < 0) throw new Error('No encontré los encabezados "ID" y "Codigo" en el relevamiento.');
+    const head = aoa[h].map(x => s(x).toLowerCase());
+    const col = re => head.findIndex(x => re.test(x));
+    const iId = col(/^id$/), iB = col(/^c[oó]digo$/), iD = col(/^producto|^descrip/), iQ = col(/^cant/),
+      iE = col(/^estado/), iU = col(/^ubic/), iF = col(/^fecha/);
+    const bloques = []; let actual = { guardado: '', lineas: [] }; bloques.push(actual);
+    const rechazadas = [];
+    for (let r = h + 1; r < aoa.length; r++) {
+      const row = aoa[r]; if (!row) continue;
+      const c0 = s(row[iId]);
+      const g = c0.match(/GUARDADO EL:\s*(.+)$/i);
+      if (g) { actual = { guardado: fmtFecha(g[1]), lineas: [] }; bloques.push(actual); continue; }
+      if (!row.some(x => s(x) !== '')) continue;
+      const linea = {
+        c: normCod(row[iId]),
+        b: iB >= 0 ? codBarra(row[iB]) : '',
+        d: iD >= 0 ? s(row[iD]) : '',
+        q: iQ >= 0 ? num(row[iQ]) : 0,
+        e: iE >= 0 ? s(row[iE]) : '',
+        u: iU >= 0 ? s(row[iU]).toUpperCase() : '',
+        t: iF >= 0 ? fmtFecha(row[iF]) : '',
+        r: ''
+      };
+      linea.k = 'x' + hash([linea.c, linea.b, linea.q, linea.u, linea.t].join('|'));
+      if (!linea.c || !existe(linea.c)) { rechazadas.push({ fila: r + 1, ...linea, motivo: !linea.c ? 'Sin código de artículo' : 'El artículo no existe en el sistema' }); continue; }
+      if (!(linea.q > 0)) { rechazadas.push({ fila: r + 1, ...linea, motivo: 'Cantidad vacía o cero' }); continue; }
+      actual.lineas.push(linea);
+    }
+    return { bloques: bloques.filter(b => b.lineas.length), rechazadas };
+  }
+
+  // ---------- Consolidado ----------
+  // maestro: Map cod -> {c,d,u,x,co,p,cl}; sesiones: [{id, lineas}]; ajustes: [{id, anulado, creado, lineas:[[cod,contado,sistema,costo,keys]]}]
+  function consolidar(maestro, sesiones, ajustes) {
+    const consumidas = new Set(), cierre = new Map();
+    const ajOrden = ajustes.filter(a => !a.anulado).sort((a, b) => (a.creado < b.creado ? -1 : 1));
+    for (const a of ajOrden) for (const l of a.lineas) {
+      (l[4] || []).forEach(k => consumidas.add(k));
+      cierre.set(l[0], { ajuste: a.id, fecha: a.creado, contado: l[1], sistema: l[2], dif: l[1] - l[2], keys: new Set(l[4] || []) });
+    }
+    const porItem = new Map();
+    const lineasPorItem = new Map();
+    for (const se of sesiones) for (const l of (se.lineas || [])) {
+      const ref = { ...l, sesion: se.id, origen: se.origen };
+      if (!lineasPorItem.has(l.c)) lineasPorItem.set(l.c, []);
+      lineasPorItem.get(l.c).push(ref);
+      if (l.x || consumidas.has(l.k)) continue;
+      let p = porItem.get(l.c);
+      if (!p) { p = { q: 0, lineas: [], ubic: new Map(), ult: '' }; porItem.set(l.c, p); }
+      p.q += l.q; p.lineas.push(ref);
+      p.ubic.set(l.u || '—', (p.ubic.get(l.u || '—') || 0) + l.q);
+      if (l.t > p.ult) p.ult = l.t;
+    }
+    // Ubicaciones y conteos del último cierre vigente de cada artículo
+    for (const [c, ci] of cierre) {
+      ci.lineas = (lineasPorItem.get(c) || []).filter(l => !l.x && ci.keys.has(l.k));
+      ci.ubics = new Map();
+      for (const l of ci.lineas) { const u = l.u || '—'; ci.ubics.set(u, (ci.ubics.get(u) || 0) + l.q); }
+    }
+    // Ítem ya cerrado que se vuelve a contar: una ubicación recontada reemplaza la del cierre,
+    // una ubicación nueva se suma, y las que no se recuentan conservan lo contado en el cierre.
+    for (const [c, p] of porItem) {
+      p.vig = p.lineas.slice();
+      const ci = cierre.get(c); if (!ci) continue;
+      const abiertas = new Set(p.lineas.map(l => l.u || '—'));
+      p.arr = 0; p.arrUbics = []; p.nuevas = [...abiertas].filter(u => !ci.ubics.has(u));
+      for (const l of ci.lineas) {
+        const u = l.u || '—'; if (abiertas.has(u)) continue;
+        p.q += l.q; p.arr += l.q; p.ubic.set(u, (p.ubic.get(u) || 0) + l.q); p.vig.push(l);
+        if (!p.arrUbics.includes(u)) p.arrUbics.push(u);
+      }
+    }
+    // Ticket nuevo: una ubicación cuenta como etiquetada si algún conteo vigente ahí lo confirmó
+    const etiqueta = vig => {
+      if (!vig || !vig.length) return { estado: null, pend: [] };
+      const m = new Map();
+      for (const l of vig) { const u = l.u || '—'; m.set(u, !!m.get(u) || !!l.et); }
+      const pend = [...m].filter(e => !e[1]).map(e => e[0]);
+      return { estado: !pend.length ? 'ok' : pend.length === m.size ? 'no' : 'parcial', pend };
+    };
+    const filas = [];
+    const codigos = new Set([...maestro.keys(), ...porItem.keys(), ...cierre.keys()]);
+    for (const c of codigos) {
+      const m = maestro.get(c) || { c, d: '(no está en el maestro actual)', u: '', x: 0, co: 0, p: 0, cl: '' };
+      const ab = porItem.get(c), ci = cierre.get(c);
+      let estado = 'pendiente';
+      if (ab) estado = 'curso'; else if (ci) estado = 'relevado';
+      const ubicCounts = ab ? [...ab.ubic.entries()] : [];
+      const dobles = ab ? ab.lineas.length - new Set(ab.lineas.map(l => l.u)).size : 0;
+      const et = etiqueta(ab ? ab.vig : ci ? ci.lineas : null);
+      filas.push({
+        c, d: m.d, u: m.u, x: m.x, co: m.co, p: m.p, cl: m.cl,
+        estado, contado: ab ? ab.q : null, dif: ab ? ab.q - m.x : null,
+        ubics: ubicCounts, ult: ab ? ab.ult : (ci ? ci.fecha : ''), cierre: ci || null,
+        nLineas: ab ? ab.lineas.length : 0, dobles, enMaestro: maestro.has(c),
+        arrastre: ab && ab.arr ? { q: ab.arr, ubics: ab.arrUbics } : null,
+        nuevas: ab && ab.nuevas && ab.nuevas.length ? ab.nuevas : null,
+        cierreUbics: ci ? [...ci.ubics.entries()] : [],
+        etq: et.estado, etqPend: et.pend
+      });
+    }
+    return { filas, lineasPorItem, consumidas };
+  }
+
+  // equivalencias código impreso -> artículo
+  function equivalencias(sesiones) {
+    const m = new Map();
+    for (const se of sesiones) for (const l of (se.lineas || [])) {
+      if (l.x) continue;
+      for (const b of new Set([l.b, l.tk].filter(Boolean))) {
+        let e = m.get(b);
+        if (!e) { e = { b, cods: new Map(), primera: l.t, ultima: l.t, ticket: false }; m.set(b, e); }
+        if (b === l.tk) e.ticket = true;
+        e.cods.set(l.c, (e.cods.get(l.c) || 0) + 1);
+        if (l.t && l.t < e.primera) e.primera = l.t;
+        if (l.t > e.ultima) e.ultima = l.t;
+      }
+    }
+    return m;
+  }
+  const numeroArticulo = c => (c.split('/').pop() || '').replace(/[^0-9A-Z]/gi, '');
+
+  return { CHUNK_MAESTRO, LINEAS_POR_SESION, hash, fmtFecha, normCod, parseExistencias, parseRelevamiento, consolidar, equivalencias, numeroArticulo };
+})();
+if (typeof module !== 'undefined') module.exports = Core;
+
+</script>
+<script>
+(() => {
+'use strict';
+// ================== Estado ==================
+const S = {
+  db: null, user: null, uid: '', canWrite: true, ready: { meta: false, maestro: false, sesiones: false, ajustes: false, importaciones: false, foto0meta: false, foto0: false },
+  meta: null, chunks: new Map(), maestro: new Map(), maestroSnap: null,
+  sesiones: [], ajustes: [], importaciones: [], foto0Meta: null, foto0Chunks: new Map(), foto0: new Map(), foto0Snap: null, cons: null, filas: [], porCod: new Map(), equiv: new Map(),
+  names: {}, view: 'resumen', ui: { itFiltro: 'stock', itQ: '', itLim: 200, itSort: 'auto', ajSel: new Set(), ajQ: '', ajSoloDif: false, eqFiltro: 'todas', eqQ: '', hiFiltro: 'todos', hiLim: 80, f0Filtro: 'aj', f0Q: '', f0Lim: 300 },
+  carga: { item: null, bar: '', cands: [], q: '' }, timer: null, error: ''
+};
+const $ = (sel, el = document) => el.querySelector(sel);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nf0 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+const fN = v => v == null ? '—' : nf2.format(v);
+const f$ = v => v == null ? '—' : '$ ' + nf0.format(v);
+const fSign = v => v == null ? '—' : (v > 0 ? '+' : '') + nf2.format(v);
+const pad = n => String(n).padStart(2, '0');
+const ahora = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+const fF = t => { if (!t) return '—'; const m = String(t).match(/^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):(\d{2}))?/); return m ? `${m[3]}/${m[2]}/${m[1].slice(2)}${m[4] ? ' ' + m[4] + ':' + m[5] : ''}` : t; };
+const nuevoId = p => `${p}-${ahora().replace(/\D/g, '')}-${Math.random().toString(36).slice(2, 7)}`;
+const difCls = v => v == null ? '' : v < 0 ? 'neg' : v > 0 ? 'pos' : 'zero';
+const horas = (a, b) => Math.abs(new Date(a.replace(' ', 'T')) - new Date(b.replace(' ', 'T'))) / 36e5;
+const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
+
+function toast(msg, ms = 2600) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), ms);
+}
+const nombre = uid => uid ? (S.names[uid] || '…') : '—';
+async function resolverNombres(ids) {
+  if (!S.user) return; const falt = [...new Set(ids)].filter(i => i && !(i in S.names)); if (!falt.length) return;
+  try { const ps = await S.user.profiles(falt); falt.forEach(i => S.names[i] = (ps[i] && ps[i].name) || 'Usuario'); scheduleRender(); } catch (e) { }
+}
+
+// ================== Escrituras serializadas por documento ==================
+const colas = new Map();
+function escribir(path, fn) {
+  const prev = colas.get(path) || Promise.resolve();
+  const p = prev.catch(() => { }).then(fn);
+  colas.set(path, p); return p;
+}
+async function conReintento(fn) {
+  try { return await fn(); } catch (e) {
+    if (e && e.code === 'unavailable') { await new Promise(r => setTimeout(r, 600 + Math.random() * 800)); return fn(); }
+    throw e;
+  }
+}
+function errMsg(e) {
+  const c = e && e.code;
+  if (c === 'quota_exceeded') return 'La base llegó a su límite de espacio. Avisale a Raul para depurar historial antiguo.';
+  if (c === 'invalid_argument') return 'No tenés permiso para guardar cambios en esta app, o el dato es inválido.';
+  if (c === 'resource_exhausted') return 'Demasiadas operaciones seguidas. Esperá unos segundos y probá de nuevo.';
+  return 'No se pudo guardar (' + (c || 'error') + '). Revisá la conexión y probá de nuevo.';
+}
+
+// ================== Derivados ==================
+function rebuildMaestro() {
+  const m = S.meta; if (!m) { S.maestro = new Map(); S.maestroSnap = null; return; }
+  const parts = []; for (let i = 0; i < m.chunks; i++) { const c = S.chunks.get('m' + i); if (!c || c.snap !== m.snap) return; parts.push(c); }
+  if (S.maestroSnap === m.snap) return;
+  const map = new Map();
+  for (const c of parts) for (const it of c.items) map.set(it[0], { c: it[0], d: it[1], u: it[2], x: it[3], co: it[4], p: it[5], cl: it[6] });
+  S.maestro = map; S.maestroSnap = m.snap;
+}
+function rebuildFoto0() {
+  const m = S.foto0Meta; if (!m) { S.foto0 = new Map(); S.foto0Snap = null; return; }
+  if (S.foto0Snap === m.id) return;
+  const parts = []; for (let i = 0; i < m.chunks; i++) { const c = S.foto0Chunks.get(m.id + '-f' + i); if (!c) return; parts.push(c); }
+  const map = new Map();
+  for (const c of parts) for (const it of c.items) map.set(it[0], { c: it[0], x: it[1], co: it[2], d: it[3] });
+  S.foto0 = map; S.foto0Snap = m.id;
+}
+function recompute() {
+  rebuildMaestro(); rebuildFoto0();
+  S.cons = Core.consolidar(S.maestro, S.sesiones, S.ajustes);
+  S.filas = S.cons.filas; S.porCod = new Map(S.filas.map(f => [f.c, f]));
+  S.equiv = Core.equivalencias(S.sesiones);
+  const ids = []; S.sesiones.forEach(s => { ids.push(s.user); (s.lineas || []).forEach(l => l.xu && ids.push(l.xu)); });
+  S.ajustes.forEach(a => { ids.push(a.user); ids.push(a.anuladoPor); ids.push(a.cargadoPor); }); if (S.foto0Meta) ids.push(S.foto0Meta.user); S.importaciones.forEach(i => ids.push(i.user));
+  resolverNombres(ids.filter(Boolean));
+}
+let rq = 0;
+function scheduleRender() { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; render(); }); }
+let dirty = true;
+function changed() { dirty = true; scheduleRender(); }
+
+// ================== Conexión ==================
+async function init() {
+  window.addEventListener('hashchange', () => { S.view = vistaDeHash(); render(true); });
+  S.view = vistaDeHash();
+  S.timer = setTimeout(() => { if (!todoListo()) { S.error = 'lento'; render(); } }, 10000);
+  const cl = window.claude;
+  if (!cl || !cl.use) { S.error = 'sin-db'; render(); return; }
+  const [db, user] = await Promise.all([cl.use('db'), cl.use('user')]);
+  S.db = db; S.user = user;
+  if (!db) { S.error = 'sin-db'; render(); return; }
+  if (user) {
+    try { S.uid = (await user.id()) || ''; } catch (e) { }
+    try { const w = await user.can('data.write'); S.canWrite = w !== false; } catch (e) { }
+  }
+  const onErr = e => { S.error = 'db:' + (e && e.code); render(); };
+  db.doc('config/maestro').onSnapshot(sn => { S.meta = sn.exists ? sn.data() : null; S.ready.meta = !sn.metadata.fromCache || S.ready.meta; changed(); }, onErr);
+  db.collection('maestro').onSnapshot(q => { S.chunks = new Map(q.docs.map(d => [d.id, d.data()])); S.ready.maestro = !q.metadata.fromCache || S.ready.maestro; changed(); }, onErr);
+  db.collection('sesiones').onSnapshot(q => { S.sesiones = q.docs.map(d => ({ id: d.id, ...d.data() })); S.ready.sesiones = !q.metadata.fromCache || S.ready.sesiones; changed(); }, onErr);
+  db.collection('ajustes').onSnapshot(q => { S.ajustes = q.docs.map(d => ({ id: d.id, ...d.data() })); S.ready.ajustes = !q.metadata.fromCache || S.ready.ajustes; changed(); }, onErr);
+  db.collection('importaciones').onSnapshot(q => { S.importaciones = q.docs.map(d => ({ id: d.id, ...d.data() })); S.ready.importaciones = !q.metadata.fromCache || S.ready.importaciones; changed(); }, onErr);
+  db.doc('config/foto0').onSnapshot(sn => { S.foto0Meta = sn.exists ? sn.data() : null; S.ready.foto0meta = !sn.metadata.fromCache || S.ready.foto0meta; changed(); }, onErr);
+  db.collection('foto0').onSnapshot(q => { S.foto0Chunks = new Map(q.docs.map(d => [d.id, d.data()])); S.ready.foto0 = !q.metadata.fromCache || S.ready.foto0; changed(); }, onErr);
+}
+const todoListo = () => Object.values(S.ready).every(Boolean);
+const VISTAS = [['resumen', 'Resumen'], ['items', 'Ítems'], ['cargar', 'Cargar conteo'], ['ajustes', 'Cierres y ajustes'], ['foto0', 'Foto 0'], ['equivalencias', 'Códigos impresos'], ['historial', 'Historial'], ['importar', 'Importar Excel']];
+function vistaDeHash() { const h = location.hash.slice(1); return VISTAS.some(v => v[0] === h) ? h : 'resumen'; }
+
+// ================== Render general ==================
+function renderStatus() {
+  const dot = $('#dbdot'), txt = $('#dbtxt');
+  const st = $('#status');
+  let extra = '';
+  if (S.meta) extra += `<span>Sistema al <b>${esc(fF(S.meta.fechaDato))}</b></span>`;
+  extra += `<span>Artículos <b>${nf0.format(S.maestro.size)}</b></span>`;
+  if (!S.canWrite) extra += `<span><b>Solo lectura</b></span>`;
+  st.innerHTML = `<span><span class="dot" id="dbdot"></span><span id="dbtxt"></span></span>` + extra;
+  const d = $('#dbdot'), t = $('#dbtxt');
+  if (S.error === 'sin-db') { d.className = 'dot'; t.textContent = 'Sin base de datos'; }
+  else if (S.error.startsWith('db:')) { d.className = 'dot warn'; t.textContent = 'Base con error'; }
+  else if (todoListo()) { d.className = 'dot on'; t.textContent = 'Base en línea'; }
+  else if (S.error === 'lento') { d.className = 'dot warn'; t.textContent = 'Base sin respuesta'; }
+  else { d.className = 'dot'; t.textContent = 'Conectando…'; }
+}
+function renderTabs() {
+  const curso = S.filas.filter(f => f.estado === 'curso').length;
+  $('#tabs').innerHTML = VISTAS.map(([k, l]) => `<a href="#${k}" ${S.view === k ? 'aria-current="page"' : ''}>${l}${k === 'ajustes' && curso ? `<span class="n">${curso}</span>` : ''}</a>`).join('');
+}
+let lastView = '';
+function render(force) {
+  if (dirty) { recompute(); dirty = false; }
+  renderStatus(); renderTabs();
+  if (S.timer && todoListo()) { clearTimeout(S.timer); S.timer = null; if (S.error === 'lento') S.error = ''; }
+  const main = $('#main');
+  if (S.error === 'sin-db') { main.innerHTML = `<div class="notice bad">La base de datos de la app no está disponible en esta vista. Abrí el link desde claude.ai con tu cuenta para ver y cargar el relevamiento.</div>`; return; }
+  if (!todoListo() && !S.meta && !S.sesiones.length) { main.innerHTML = `<div class="empty">${S.error === 'lento' ? 'La base todavía no responde. Revisá la conexión; la app sigue intentando.' : 'Cargando la base de relevamiento…'}</div>`; return; }
+  // no re-renderizar la vista de carga mientras se tipea: solo partes
+  if (S.view === 'cargar' && lastView === 'cargar' && !force) { refreshCarga(); return; }
+  const keepScroll = lastView === S.view ? window.scrollY : 0;
+  lastView = S.view;
+  const fn = { resumen: vResumen, items: vItems, cargar: vCargar, ajustes: vAjustes, foto0: vFoto0, equivalencias: vEquiv, historial: vHistorial, importar: vImportar }[S.view];
+  main.innerHTML = '';
+  const sec = document.createElement('section'); sec.className = 'view'; main.appendChild(sec);
+  if (S.error.startsWith('db:')) sec.insertAdjacentHTML('beforeend', `<div class="notice bad">La conexión con la base falló (${esc(S.error.slice(3))}). Recargá la página para reconectar.</div>`);
+  if (!S.meta) sec.insertAdjacentHTML('beforeend', `<div class="notice warn">Todavía no hay existencias del sistema cargadas. Empezá por <a href="#importar">Importar Excel</a>.</div>`);
+  fn(sec);
+  if (keepScroll) window.scrollTo(0, keepScroll);
+}
+
+// ================== Universo y métricas ==================
+function estadoPill(f) {
+  if (f.estado === 'curso') return `<span class="pill p-curso">En curso</span>`;
+  if (f.estado === 'relevado') return `<span class="pill p-rel">Relevado</span>`;
+  return `<span class="pill p-pend">Pendiente</span>`;
+}
+const enUniverso = f => f.x !== 0 || f.estado !== 'pendiente';
+function etqPill(f) {
+  if (!f.etq) return '<span class="muted">—</span>';
+  if (f.etq === 'ok') return '<span class="pill p-rel">Pegado</span>';
+  const t = 'Sin ticket en ' + f.etqPend.join(', ');
+  return f.etq === 'parcial' ? `<span class="pill p-curso" title="${esc(t)}">Parcial</span>` : `<span class="pill p-bad" title="${esc(t)}">Falta</span>`;
+}
+function marcas(f) {
+  let h = f.dobles ? ' <span class="pill p-bad" title="Hay más de un conteo abierto en la misma ubicación">doble</span>' : '';
+  if (f.nuevas) h += ` <span class="pill p-info" title="Ya relevado; apareció en ${esc(f.nuevas.join(', '))}. Se suma al total.">ubicación nueva</span>`;
+  else if (f.arrastre) h += ` <span class="pill p-info" title="Recuento: incluye lo contado en el cierre anterior en ${esc(f.arrastre.ubics.join(', '))}">recuento</span>`;
+  return h;
+}
+const PRED = {
+  stock: enUniverso, curso: f => f.estado === 'curso', dif: f => f.estado === 'curso' && !!f.dif,
+  pendiente: f => f.estado === 'pendiente' && enUniverso(f), relevado: f => f.estado === 'relevado',
+  reap: f => !!f.nuevas, sinetq: f => !!f.etq && f.etq !== 'ok', todos: () => true
+};
+const unidadesNuevas = f => f.nuevas ? f.ubics.filter(u => f.nuevas.includes(u[0])).reduce((a, u) => a + u[1], 0) : 0;
+function metricas() {
+  const u = S.filas.filter(enUniverso);
+  const r = { total: u.length, rel: 0, curso: 0, pend: 0, vTot: 0, vRel: 0, vCurso: 0, falt: 0, sobr: 0, faltU: 0, sobrU: 0, conDif: 0, reap: 0, reapU: 0, reapV: 0, etTot: 0, etOk: 0, etUbic: 0 };
+  for (const f of u) {
+    if (f.nuevas) { const q = unidadesNuevas(f); r.reap++; r.reapU += q; r.reapV += q * f.co; }
+    if (f.etq) { r.etTot++; if (f.etq === 'ok') r.etOk++; r.etUbic += f.etqPend.length; }
+    const v = Math.max(f.x, 0) * f.co; r.vTot += v;
+    if (f.estado === 'relevado') { r.rel++; r.vRel += v; }
+    else if (f.estado === 'curso') {
+      r.curso++; r.vCurso += v;
+      if (f.dif) { r.conDif++; if (f.dif < 0) { r.falt += f.dif * f.co; r.faltU += f.dif; } else { r.sobr += f.dif * f.co; r.sobrU += f.dif; } }
+    } else r.pend++;
+  }
+  return r;
+}
+const zona = u => { const t = String(u || '').toUpperCase().replace(/[\s.\-_/]/g, ''); const m = t.match(/^(\d+[A-Z]?)/); return m ? m[1] : (t ? t.slice(0, 8) : 'SIN UBIC.'); };
+
+// ================== Vista: Resumen ==================
+function vResumen(sec) {
+  const m = metricas(); const pct = (a, b) => b ? Math.round(a / b * 1000) / 10 : 0;
+  sec.insertAdjacentHTML('beforeend', `
+  <div><h2>Avance del relevamiento</h2><p class="lead">Universo: artículos con existencia en el sistema o con algún conteo. Un ítem queda <b>Relevado</b> cuando se cierra en un lote de ajuste; si se vuelve a contar después, pasa otra vez a En curso.</p></div>
+  <div class="grid kpis" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+    <div class="kpi"><span class="label">Universo</span><span class="v">${nf0.format(m.total)}</span><span class="s">${f$(m.vTot)} a costo medio</span></div>
+    <div class="kpi ok"><span class="label">Relevados</span><span class="v">${nf0.format(m.rel)}</span><span class="s">${pct(m.rel, m.total)}% de ítems · ${pct(m.vRel, m.vTot)}% del valor</span></div>
+    <div class="kpi gold"><span class="label">En curso</span><span class="v">${nf0.format(m.curso)}</span><span class="s">contados, sin cerrar · ${m.conDif} con diferencia</span></div>
+    <div class="kpi"><span class="label">Pendientes</span><span class="v">${nf0.format(m.pend)}</span><span class="s">${pct(m.pend, m.total)}% sin contar</span></div>
+    <div class="kpi bad"><span class="label">Faltantes en curso</span><span class="v">${f$(m.falt)}</span><span class="s">${fN(m.faltU)} unidades</span></div>
+    <div class="kpi info"><span class="label">Sobrantes en curso</span><span class="v">${f$(m.sobr)}</span><span class="s">+${fN(m.sobrU)} unidades</span></div>
+    <div class="kpi info"><span class="label">Reaparecidos</span><span class="v">${nf0.format(m.reap)}</span><span class="s">ya relevados, hallados en otra ubicación · +${fN(m.reapU)} u. (${f$(m.reapV)})</span>${m.reap ? '<button class="link" data-go="reap">Ver ítems</button>' : ''}</div>
+    <div class="kpi ok"><span class="label">Ticket nuevo pegado</span><span class="v">${pct(m.etOk, m.etTot)}%</span><span class="s">${nf0.format(m.etOk)} de ${nf0.format(m.etTot)} ítems contados · ${nf0.format(m.etUbic)} ubicaciones pendientes</span>${m.etTot > m.etOk ? '<button class="link" data-go="sinetq">Ver pendientes</button>' : ''}</div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>Avance por cantidad de ítems</h3></div>
+    <div class="bar"><span class="c-ok" style="width:${pct(m.rel, m.total)}%"></span><span class="c-gold" style="width:${pct(m.curso, m.total)}%"></span></div>
+    <div class="panel-head" style="margin:14px 0 12px"><h3>Avance por valor a costo</h3></div>
+    <div class="bar"><span class="c-ok" style="width:${pct(m.vRel, m.vTot)}%"></span><span class="c-gold" style="width:${pct(m.vCurso, m.vTot)}%"></span></div>
+    <div class="legend"><span><i class="sw c-ok"></i>Relevado</span><span><i class="sw c-gold"></i>En curso</span><span><i class="sw c-mut"></i>Pendiente</span></div>
+  </div>`);
+  // zonas pendientes
+  const zonas = new Map();
+  for (const f of S.filas) {
+    if (!enUniverso(f) || !f.enMaestro) continue; const z = zona(f.u);
+    let o = zonas.get(z); if (!o) { o = { z, tot: 0, pend: 0, curso: 0, rel: 0, vPend: 0 }; zonas.set(z, o); }
+    o.tot++; o[f.estado === 'pendiente' ? 'pend' : f.estado === 'curso' ? 'curso' : 'rel']++;
+    if (f.estado === 'pendiente') o.vPend += Math.max(f.x, 0) * f.co;
+  }
+  const zl = [...zonas.values()].sort((a, b) => b.vPend - a.vPend).slice(0, 14);
+  // ubicaciones contadas
+  const ub = new Map();
+  for (const f of S.filas) for (const [u, q] of f.ubics) { const k = u; let o = ub.get(k); if (!o) { o = { u: k, items: 0, q: 0 }; ub.set(k, o); } o.items++; o.q += q; }
+  const ul = [...ub.values()].sort((a, b) => a.u.localeCompare(b.u, 'es', { numeric: true })).slice(0, 40);
+  const evs = eventos().slice(0, 8);
+  const tk = new Map();
+  for (const f of S.filas) for (const u of (f.etqPend || [])) { let o = tk.get(u); if (!o) { o = { u, n: 0 }; tk.set(u, o); } o.n++; }
+  const tkl = [...tk.values()].sort((a, b) => b.n - a.n || a.u.localeCompare(b.u, 'es', { numeric: true })).slice(0, 30);
+  sec.insertAdjacentHTML('beforeend', `
+  <div class="cols2">
+    <div class="panel"><div class="panel-head"><h3>Dónde seguir: zonas del sistema con más valor pendiente</h3></div>
+      <p class="small muted" style="margin:-6px 0 10px">Agrupado por la ubicación cargada en el sistema (estante + columna). Los ítems sin ubicación quedan en "SIN UBIC.".</p>
+      <div class="tbl-wrap"><table><thead><tr><th>Zona</th><th class="n">Ítems</th><th class="n">Pend.</th><th class="n">En curso</th><th class="n">Relev.</th><th class="n">Valor pendiente</th></tr></thead><tbody>
+      ${zl.map(z => `<tr class="click" data-zona="${esc(z.z)}"><td class="cod">${esc(z.z)}</td><td class="n">${z.tot}</td><td class="n">${z.pend}</td><td class="n">${z.curso}</td><td class="n">${z.rel}</td><td class="n">${f$(z.vPend)}</td></tr>`).join('') || `<tr><td colspan="6" class="empty">Sin datos</td></tr>`}
+      </tbody></table></div></div>
+    <div class="panel"><div class="panel-head"><h3>Ubicaciones contadas (ciclo abierto)</h3></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Ubicación</th><th class="n">Ítems</th><th class="n">Unidades</th></tr></thead><tbody>
+      ${ul.map(o => `<tr><td class="cod">${esc(o.u)}</td><td class="n">${o.items}</td><td class="n">${fN(o.q)}</td></tr>`).join('') || `<tr><td colspan="3" class="empty">No hay conteos abiertos</td></tr>`}
+      </tbody></table></div></div>
+  </div>
+  <div class="panel"><div class="panel-head"><h3>Tickets nuevos pendientes por ubicación</h3></div>
+    <p class="small muted" style="margin:-6px 0 10px">Ubicaciones con artículos contados donde todavía no se confirmó el ticket nuevo. Tocá una para ver los artículos.</p>
+    <div class="tbl-wrap"><table><thead><tr><th>Ubicación</th><th class="n">Artículos sin ticket</th></tr></thead><tbody>
+    ${tkl.map(o => `<tr class="click" data-tku="${esc(o.u)}"><td class="cod">${esc(o.u)}</td><td class="n">${o.n}</td></tr>`).join('') || '<tr><td colspan="2" class="empty">No hay tickets pendientes</td></tr>'}
+    </tbody></table></div></div>
+  <div class="panel"><div class="panel-head"><h3>Última actividad</h3><span class="sp"><a href="#historial" class="small">Ver historial completo</a></span></div>
+    <div class="timeline">${evs.map(evHtml).join('') || '<div class="empty">Sin actividad todavía</div>'}</div></div>`);
+  sec.querySelectorAll('[data-zona]').forEach(tr => tr.onclick = () => { S.ui.itQ = 'zona:' + tr.dataset.zona; S.ui.itFiltro = 'pendiente'; S.ui.itLim = 200; location.hash = 'items'; });
+  sec.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { S.ui.itQ = ''; S.ui.itFiltro = b.dataset.go; S.ui.itLim = 200; location.hash = 'items'; });
+  sec.querySelectorAll('[data-tku]').forEach(tr => tr.onclick = () => { S.ui.itQ = tr.dataset.tku; S.ui.itFiltro = 'sinetq'; S.ui.itLim = 200; location.hash = 'items'; });
+}
+
+// ================== Vista: Ítems ==================
+function filtrarItems() {
+  const q = S.ui.itQ.trim().toUpperCase(); const F = S.ui.itFiltro;
+  let zonaQ = null, toks = [];
+  if (q.startsWith('ZONA:')) zonaQ = q.slice(5).trim(); else toks = q.split(/\s+/).filter(Boolean);
+  let l = S.filas.filter(f => {
+    if (!(PRED[F] || PRED.todos)(f)) return false;
+    if (zonaQ !== null && zona(f.u) !== zonaQ) return false;
+    if (toks.length) { const h = (f.c + ' ' + f.d + ' ' + f.u + ' ' + f.ubics.map(u => u[0]).join(' ')).toUpperCase(); if (!toks.every(t => h.includes(t))) return false; }
+    return true;
+  });
+  const s = S.ui.itSort;
+  const ord = { curso: 0, relevado: 1, pendiente: 2 };
+  if (s === 'auto') l.sort((a, b) => ord[a.estado] - ord[b.estado] || Math.abs((b.dif || 0) * b.co) - Math.abs((a.dif || 0) * a.co) || a.c.localeCompare(b.c, 'es', { numeric: true }));
+  else if (s === 'cod') l.sort((a, b) => a.c.localeCompare(b.c, 'es', { numeric: true }));
+  else if (s === 'valor') l.sort((a, b) => b.x * b.co - a.x * a.co);
+  else if (s === 'dif') l.sort((a, b) => (a.dif ?? 1e15) * a.co - (b.dif ?? 1e15) * b.co);
+  else if (s === 'ult') l.sort((a, b) => (b.ult || '').localeCompare(a.ult || ''));
+  return l;
+}
+function vItems(sec) {
+  const cnt = k => S.filas.filter(PRED[k]).length;
+  const chips = [['stock', 'Con stock o contados'], ['curso', 'En curso'], ['dif', 'Con diferencia'], ['pendiente', 'Pendientes'], ['relevado', 'Relevados'], ['reap', 'Reaparecidos'], ['sinetq', 'Sin ticket nuevo'], ['todos', 'Todo el maestro']];
+  const l = filtrarItems(); const vis = l.slice(0, S.ui.itLim);
+  sec.innerHTML = `
+  <div><h2>Ítems</h2><p class="lead">Consolidado por artículo: suma de todos los conteos abiertos en todas las ubicaciones contra la existencia del sistema. Tocá un ítem para ver todo su historial.</p></div>
+  <div class="toolbar">
+    <input class="search" id="itq" type="search" placeholder="Buscar código, descripción o ubicación (o zona:5C)" value="${esc(S.ui.itQ)}">
+    <select id="itsort" aria-label="Orden"><option value="auto">Orden: prioridad</option><option value="cod">Código</option><option value="valor">Valor en stock</option><option value="dif">Diferencia valorizada</option><option value="ult">Último conteo</option></select>
+    <button class="btn" id="itexp">Exportar a Excel</button>
+  </div>
+  <div class="chips">${chips.map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${S.ui.itFiltro === k}">${t}<span class="n">${nf0.format(cnt(k))}</span></button>`).join('')}</div>
+  <div class="small muted">${nf0.format(l.length)} ítems${l.length > vis.length ? ` · mostrando ${nf0.format(vis.length)}` : ''}</div>
+  <div class="tbl-wrap"><table><thead><tr><th>Artículo</th><th>Descripción</th><th>Ubic. sistema</th><th>Ubic. contadas</th><th class="n">Sistema</th><th class="n">Contado</th><th class="n">Dif.</th><th class="n">Dif. $</th><th>Estado</th><th>Ticket</th><th>Último</th></tr></thead>
+  <tbody>${vis.map(f => `<tr class="click" data-c="${esc(f.c)}"><td class="cod">${esc(f.c)}</td><td>${esc(f.d)}${marcas(f)}</td><td class="mono">${esc(f.u || '—')}</td><td class="mono">${f.ubics.map(u => esc(u[0])).join(', ') || '—'}</td><td class="n">${fN(f.x)}</td><td class="n">${f.contado == null ? '—' : fN(f.contado)}</td><td class="n ${difCls(f.dif)}">${fSign(f.dif)}</td><td class="n ${difCls(f.dif)}">${f.dif == null ? '—' : f$(f.dif * f.co)}</td><td>${estadoPill(f)}</td><td>${etqPill(f)}</td><td class="mono">${esc(fF(f.ult))}</td></tr>`).join('') || `<tr><td colspan="11" class="empty">No hay ítems con ese filtro</td></tr>`}</tbody></table></div>
+  ${l.length > vis.length ? `<div class="more"><button class="btn" id="itmore">Mostrar ${nf0.format(Math.min(500, l.length - vis.length))} más</button></div>` : ''}`;
+  $('#itsort', sec).value = S.ui.itSort;
+  let deb; $('#itq', sec).oninput = e => { clearTimeout(deb); deb = setTimeout(() => { S.ui.itQ = e.target.value; S.ui.itLim = 200; renderKeepFocus('#itq'); }, 220); };
+  $('#itsort', sec).onchange = e => { S.ui.itSort = e.target.value; render(true); };
+  sec.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.ui.itFiltro = b.dataset.f; S.ui.itLim = 200; render(true); });
+  sec.querySelectorAll('tr[data-c]').forEach(tr => tr.onclick = () => abrirItem(tr.dataset.c));
+  const more = $('#itmore', sec); if (more) more.onclick = () => { S.ui.itLim += 500; render(true); };
+  $('#itexp', sec).onclick = () => exportar('items_' + ahora().slice(0, 10) + '.xlsx', [['Artículo', 'Descripción', 'Ubicación sistema', 'Ubicaciones contadas', 'Existencia sistema', 'Contado', 'Diferencia', 'Costo medio', 'Diferencia $', 'Estado', 'Ticket nuevo', 'Ubicaciones nuevas', 'Último conteo']].concat(l.map(f => [f.c, f.d, f.u, f.ubics.map(u => u[0] + ':' + u[1]).join(' | '), f.x, f.contado, f.dif, f.co, f.dif == null ? null : Math.round(f.dif * f.co * 100) / 100, f.estado, f.etq === 'ok' ? 'Pegado' : f.etq === 'parcial' ? 'Parcial' : f.etq === 'no' ? 'Falta' : '', (f.nuevas || []).join(' | '), f.ult])), 'Items');
+}
+function renderKeepFocus(sel) {
+  const el = $(sel); const pos = el ? el.selectionStart : null; render(true);
+  const n = $(sel); if (n) { n.focus(); if (pos != null) try { n.setSelectionRange(pos, pos); } catch (e) { } }
+}
+
+// ================== Detalle de ítem ==================
+const deltaCache = new Map();
+async function historialExistencias(cod) {
+  const imps = S.importaciones.filter(i => i.tipo === 'existencias').sort((a, b) => a.creado < b.creado ? -1 : 1);
+  const out = [];
+  for (const imp of imps) {
+    if (imp.base) { const v = (imp.baseVal || {})[cod]; out.push({ fecha: imp.fechaDato, txt: 'Base inicial', x: null, imp }); continue; }
+    if (!deltaCache.has(imp.id)) {
+      try { const q = await S.db.collection('importaciones/' + imp.id + '/delta').get(); const rows = []; q.docs.forEach(d => rows.push(...(d.data().rows || []))); deltaCache.set(imp.id, new Map(rows.map(r => [r[0], r]))); } catch (e) { deltaCache.set(imp.id, new Map()); }
+    }
+    const r = deltaCache.get(imp.id).get(cod); if (r) out.push({ fecha: imp.fechaDato, antes: r[1], despues: r[2], imp });
+  }
+  return out;
+}
+function abrirItem(cod) {
+  const f = S.porCod.get(cod) || { c: cod, d: '', x: 0, co: 0, ubics: [], estado: 'pendiente' };
+  const lineas = (S.cons.lineasPorItem.get(cod) || []).slice().sort((a, b) => (b.t || '').localeCompare(a.t || ''));
+  const cierres = S.ajustes.filter(a => a.lineas.some(l => l[0] === cod)).sort((a, b) => b.creado.localeCompare(a.creado));
+  const bars = [...new Set(lineas.filter(l => l.b && !l.x).map(l => l.b))];
+  const L = $('#layer');
+  L.innerHTML = `<div class="drawer-bg" id="dbg"></div><aside class="drawer" role="dialog" aria-modal="true" aria-label="Detalle del artículo">
+    <button class="btn sm close" id="dclose">Cerrar</button>
+    <div><div class="label">${esc(f.c)}</div><h2>${esc(f.d)}</h2><div class="toolbar" style="margin-top:8px">${estadoPill(f)}<span class="small muted">Ubicación en sistema: <b class="mono">${esc(f.u || '—')}</b> · Costo medio ${f$(f.co)} · PVP ${f$(f.p)}${S.foto0Meta && S.foto0Snap ? ` · Foto 0: <b>${fN((S.foto0.get(f.c) || { x: 0 }).x)}</b>` : ''}</span></div>
+    <div class="toolbar" style="margin-top:6px"><span class="small">Ticket nuevo:</span> ${etqPill(f)}${f.etqPend && f.etqPend.length ? `<span class="small muted">falta en ${esc(f.etqPend.join(', '))}</span>` : ''}</div></div>
+    <div class="grid kpis"><div class="kpi"><span class="label">Sistema</span><span class="v">${fN(f.x)}</span></div><div class="kpi gold"><span class="label">Contado (abierto)</span><span class="v">${f.contado == null ? '—' : fN(f.contado)}</span><span class="s">${f.ubics.map(u => esc(u[0]) + ': ' + fN(u[1])).join(' · ') || 'Sin conteos abiertos'}</span></div><div class="kpi ${f.dif < 0 ? 'bad' : f.dif > 0 ? 'info' : 'ok'}"><span class="label">Diferencia</span><span class="v ${difCls(f.dif)}">${fSign(f.dif)}</span><span class="s">${f.dif == null ? '' : f$(f.dif * f.co)}</span></div></div>
+    ${f.nuevas ? `<div class="notice info">Ya estaba relevado (cierre del ${esc(fF(f.cierre.fecha))}: ${f.cierreUbics.map(u => esc(u[0]) + ' ' + fN(u[1])).join(', ')}). Apareció en <b>${esc(f.nuevas.join(', '))}</b> con ${fN(unidadesNuevas(f))} u., que se suman al total. Si el ajuste anterior ya se cargó en el sistema, el nuevo lote ajusta solo lo encontrado ahí.</div>` : f.arrastre ? `<div class="notice info">Es un recuento de un ítem ya cerrado. El total incluye ${fN(f.arrastre.q)} u. del cierre anterior en ${esc(f.arrastre.ubics.join(', '))}, porque esas ubicaciones no se volvieron a contar.</div>` : ''}
+    ${f.dobles ? `<div class="notice warn">Hay ${f.dobles + 1} conteos abiertos en una misma ubicación. Si es un recuento del mismo estante, anulá el conteo que sobra para no sumar dos veces.</div>` : ''}
+    <div><h3 style="margin-bottom:8px">Conteos (${lineas.length})</h3><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Ubic.</th><th class="n">Cant.</th><th>Código impreso</th><th>Ticket nuevo</th><th>Origen</th><th>Estado</th><th></th></tr></thead><tbody>
+      ${lineas.map(l => { const cerr = S.cons.consumidas.has(l.k); return `<tr class="${l.x ? 'anulada' : ''}"><td class="mono">${esc(fF(l.t))}</td><td class="mono">${esc(l.u || '—')}</td><td class="n">${fN(l.q)}</td><td class="mono">${esc(l.b || '—')}</td><td>${l.et ? `<span class="pill p-rel">Pegado</span>${l.tk ? ` <span class="mono small">${esc(l.tk)}</span>` : ''}` : !l.x && S.canWrite ? `<button class="btn sm" data-etq="${esc(l.sesion)}|${esc(l.k)}">OK, pegado</button>` : '<span class="muted">—</span>'}</td><td class="small">${l.origen === 'excel' ? 'Excel' : 'App'}${l.r ? ' · ' + esc(l.r) : ''}</td><td>${l.x ? `<span class="pill p-bad">Anulado</span>` : cerr ? `<span class="pill p-rel">Cerrado</span>` : `<span class="pill p-curso">Abierto</span>`}</td><td>${!l.x && !cerr && S.canWrite ? `<button class="btn sm danger" data-anular="${esc(l.sesion)}|${esc(l.k)}">Anular</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="empty">Nunca se contó</td></tr>'}
+    </tbody></table></div></div>
+    <div><h3 style="margin-bottom:8px">Cierres y ajustes</h3>${cierres.length ? `<div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th class="n">Contado</th><th class="n">Sistema</th><th class="n">Ajuste</th><th>Lote</th></tr></thead><tbody>${cierres.map(a => { const l = a.lineas.find(x => x[0] === cod); return `<tr class="${a.anulado ? 'anulada' : ''}"><td class="mono">${esc(fF(a.creado))}</td><td class="n">${fN(l[1])}</td><td class="n">${fN(l[2])}</td><td class="n ${difCls(l[1] - l[2])}">${fSign(l[1] - l[2])}</td><td class="small">${a.anulado ? 'Anulado' : esc(a.nota || 'Lote ' + a.id.slice(3, 11))}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="muted small">Todavía no se cerró nunca.</p>'}</div>
+    <div><h3 style="margin-bottom:6px">Códigos impresos asociados</h3><p class="small">${bars.map(b => `<span class="mono">${esc(b)}</span>`).join(' · ') || '<span class="muted">Ninguno registrado</span>'}</p></div>
+    <div><h3 style="margin-bottom:8px">Existencia en el sistema por importación</h3><div id="hexist" class="small muted">Cargando…</div></div>
+  </aside>`;
+  const cerrar = () => { L.innerHTML = ''; document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', onKey);
+  $('#dbg').onclick = cerrar; $('#dclose').onclick = cerrar;
+  L.querySelectorAll('[data-etq]').forEach(b => b.onclick = async () => { b.disabled = true; const [sid, k] = b.dataset.etq.split('|'); try { await marcarEtiqueta(sid, k); abrirItem(cod); } catch (e) { toast(errMsg(e)); b.disabled = false; } });
+  L.querySelectorAll('[data-anular]').forEach(b => b.onclick = () => confirmarBoton(b, 'Confirmar', async () => { const [sid, k] = b.dataset.anular.split('|'); await anularLinea(sid, k); cerrar(); abrirItem(cod); }));
+  historialExistencias(cod).then(h => {
+    const el = $('#hexist'); if (!el) return;
+    el.innerHTML = h.length ? `<div class="tbl-wrap"><table><thead><tr><th>Fecha del informe</th><th>Movimiento</th></tr></thead><tbody>${h.map(r => `<tr><td class="mono">${esc(fF(r.fecha))}</td><td>${r.txt ? esc(r.txt) + ' (' + esc(r.imp.archivo || '') + ')' : `${fN(r.antes)} → <b>${fN(r.despues)}</b>`}</td></tr>`).join('')}</tbody></table></div>` : 'Sin importaciones registradas.';
+  });
+}
+function confirmarBoton(btn, txt, fn) {
+  if (btn.dataset.armado) { btn.disabled = true; fn().catch(e => { toast(errMsg(e)); btn.disabled = false; }); return; }
+  btn.dataset.armado = '1'; const orig = btn.textContent; btn.textContent = txt; btn.classList.add('dark');
+  setTimeout(() => { if (btn.isConnected && !btn.disabled) { delete btn.dataset.armado; btn.textContent = orig; btn.classList.remove('dark'); } }, 4000);
+}
+async function marcarEtiqueta(sid, k) {
+  const path = 'sesiones/' + sid;
+  await escribir(path, () => conReintento(async () => {
+    const sn = await S.db.doc(path).get(); if (!sn.exists) throw { code: 'invalid_argument' };
+    const d = sn.data(); const lineas = d.lineas.map(l => l.k === k ? { ...l, et: true, ett: ahora(), etu: S.uid } : l);
+    await S.db.doc(path).update({ lineas, actualizado: ahora() });
+  }));
+  toast('Ticket nuevo marcado como pegado.');
+}
+async function anularLinea(sid, k) {
+  const path = 'sesiones/' + sid;
+  await escribir(path, () => conReintento(async () => {
+    const sn = await S.db.doc(path).get(); if (!sn.exists) throw { code: 'invalid_argument' };
+    const d = sn.data(); const lineas = d.lineas.map(l => l.k === k ? { ...l, x: true, xt: ahora(), xu: S.uid } : l);
+    await S.db.doc(path).update({ lineas, actualizado: ahora() });
+  }));
+  toast('Conteo anulado. Queda en el historial.');
+}
+
+// ================== Vista: Cargar conteo ==================
+function sesionActual() {
+  const id = LS.get('sesionActual'); const s = id && S.sesiones.find(x => x.id === id);
+  return s && !s.cerrada && (s.lineas || []).length < Core.LINEAS_POR_SESION ? s : null;
+}
+function vCargar(sec) {
+  const se = sesionActual();
+  sec.innerHTML = `
+  <div><h2>Cargar conteo</h2><p class="lead">Escaneá el código impreso con la lectora, sacale una foto con el botón Foto, o escribí el artículo del sistema. Si el código impreso no está asociado, elegí el artículo una vez y queda guardada la equivalencia.</p></div>
+  ${!S.canWrite ? '<div class="notice warn">Tenés acceso de solo lectura: no podés registrar conteos.</div>' : ''}
+  <div class="scan-grid">
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row3" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+        <div class="field"><label for="cresp">Responsable</label><input id="cresp" placeholder="Quién cuenta" value="${esc(LS.get('responsable') || '')}"></div>
+        <div class="field"><label for="cubic">Ubicación (estante.columna.nivel)</label><input id="cubic" placeholder="5.C.2" value="${esc(LS.get('ubicacion') || '')}" style="text-transform:uppercase;font-family:var(--f-mono)"></div>
+      </div>
+      <div class="field"><label for="cscan">Código impreso o artículo</label>
+        <div class="scan-wrap"><input id="cscan" class="scan-input" autocomplete="off" inputmode="search" placeholder="Escaneá o escribí y Enter" ${S.canWrite ? '' : 'disabled'}>
+          <label class="btn-foto" title="Sacar una foto de la etiqueta y leer el código" ${S.canWrite ? '' : 'aria-disabled="true"'}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span class="lg">Foto del código</span><span class="sm">Foto</span><input type="file" id="cfoto" class="vh" accept="image/*" capture="environment" aria-label="Foto del código" ${S.canWrite ? '' : 'disabled'}></label></div></div>
+      <div id="cres"></div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:10px">
+      <div class="panel-head" style="margin:0"><h3>Sesión de conteo</h3><span class="sp"><button class="btn sm" id="cnueva">Empezar sesión nueva</button></span></div>
+      <div id="csesion"></div>
+    </div>
+  </div>`;
+  const scan = $('#cscan', sec);
+  $('#cresp', sec).onchange = e => LS.set('responsable', e.target.value.trim());
+  $('#cubic', sec).onchange = e => { e.target.value = e.target.value.trim().toUpperCase(); LS.set('ubicacion', e.target.value); refreshCarga(); };
+  scan.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); buscarCarga(scan.value); } };
+  $('#cfoto', sec).onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) fotoCodigo(f); };
+  $('#cnueva', sec).onclick = () => { LS.set('sesionActual', ''); toast('Las próximas líneas van a una sesión nueva.'); refreshCarga(); };
+  if (S.carga.item || S.carga.cands.length) renderResultado();
+  refreshCarga();
+  setTimeout(() => { if (!S.carga.item) scan.focus(); }, 30);
+}
+function refreshCarga() {
+  const box = $('#csesion'); if (!box) return;
+  const se = sesionActual();
+  const lineas = se ? (se.lineas || []).slice().reverse() : [];
+  box.innerHTML = se ? `<div class="small muted">Iniciada ${esc(fF(se.creado))} · ${esc(se.responsable || 'sin responsable')} · ${lineas.filter(l => !l.x).length} líneas</div>
+  <div class="tbl-wrap" style="max-height:460px;overflow:auto"><table><thead><tr><th>Hora</th><th>Artículo</th><th>Ubic.</th><th class="n">Cant.</th><th></th></tr></thead><tbody>
+  ${lineas.map(l => `<tr class="${l.x ? 'anulada' : ''}"><td class="mono">${esc((l.t || '').slice(11, 16))}</td><td><span class="cod">${esc(l.c)}</span><br><span class="small">${esc(l.d)}</span></td><td class="mono">${esc(l.u)}</td><td class="n">${fN(l.q)}</td><td>${!l.x && !S.cons.consumidas.has(l.k) && S.canWrite ? `<button class="btn sm danger" data-an="${esc(l.k)}">Anular</button>` : ''}</td></tr>`).join('')}
+  </tbody></table></div>` : `<div class="empty">No hay sesión abierta en este dispositivo. Se crea sola con el primer conteo.</div>`;
+  box.querySelectorAll('[data-an]').forEach(b => b.onclick = () => confirmarBoton(b, 'Confirmar', () => anularLinea(se.id, b.dataset.an)));
+  if (S.carga.item) { const f = $('#citemfacts'); if (f) f.innerHTML = factsHtml(S.carga.item); }
+}
+function buscarCarga(raw) {
+  const q = raw.trim(); S.carga.q = q; S.carga.item = null; S.carga.cands = []; S.carga.bar = '';
+  if (!q) { renderResultado(); return; }
+  const Q = Core.normCod(q);
+  let cod = null, via = '';
+  if (S.maestro.has(Q)) { cod = Q; via = 'artículo'; }
+  else if (S.maestro.has('3/' + Q)) { cod = '3/' + Q; via = 'artículo'; }
+  else {
+    const e = S.equiv.get(q.replace(/\s+/g, ''));
+    if (e && e.cods.size === 1) { cod = [...e.cods.keys()][0]; via = 'código impreso conocido'; S.carga.bar = e.b; }
+  }
+  if (cod) { S.carga.item = { c: cod, via }; renderResultado(); return; }
+  // candidatos
+  const esBarra = /^[0-9A-Z]{6,}$/i.test(q) && !q.includes('/');
+  if (esBarra) S.carga.bar = q.replace(/\s+/g, '');
+  const toks = Q.split(/\s+/).filter(Boolean); const out = [];
+  const e = S.equiv.get(q.replace(/\s+/g, ''));
+  if (e) for (const c of e.cods.keys()) out.push({ c, why: 'ya asociado a este código' });
+  for (const it of S.maestro.values()) {
+    if (out.length > 60) break;
+    const n = Core.numeroArticulo(it.c);
+    if (esBarra && n.length >= 5 && Q.includes(n.toUpperCase())) { out.push({ c: it.c, why: 'el código impreso contiene el n° de artículo' }); continue; }
+    if (!esBarra && toks.length && toks.every(t => (it.c + ' ' + it.d).toUpperCase().includes(t))) out.push({ c: it.c, why: '' });
+  }
+  const seen = new Set(); S.carga.cands = out.filter(o => !seen.has(o.c) && seen.add(o.c)).slice(0, 40);
+  renderResultado();
+}
+// ---- Lectura de códigos desde una foto de la cámara ----
+// Primero el lector nativo del navegador (Android/Chrome); si no está o no encuentra nada, ZXing.
+let zxingP = null;
+function cargarZXing() {
+  if (window.ZXing) return Promise.resolve(window.ZXing);
+  if (!zxingP) zxingP = new Promise((ok, ko) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+    sc.onload = () => window.ZXing ? ok(window.ZXing) : ko(new Error('zxing'));
+    sc.onerror = () => { zxingP = null; ko(new Error('zxing')); };
+    document.head.appendChild(sc);
+  });
+  return zxingP;
+}
+async function imagenACanvas(file, max) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); return c;
+  } finally { URL.revokeObjectURL(url); }
+}
+function rotar(c) { const r = document.createElement('canvas'); r.width = c.height; r.height = c.width; const x = r.getContext('2d'); x.translate(r.width, 0); x.rotate(Math.PI / 2); x.drawImage(c, 0, 0); return r; }
+async function leerCodigos(file) {
+  if ('BarcodeDetector' in window) {
+    try {
+      const c = await imagenACanvas(file, 2000); const r = await new window.BarcodeDetector().detect(c);
+      const v = [...new Set(r.map(x => String(x.rawValue || '').trim()).filter(Boolean))]; if (v.length) return v;
+    } catch (e) { }
+  }
+  const Z = await cargarZXing();
+  const hints = new Map(); const F = Z.BarcodeFormat;
+  hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [F.CODE_128, F.CODE_39, F.CODE_93, F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.ITF, F.CODABAR, F.QR_CODE, F.DATA_MATRIX]);
+  const reader = new Z.MultiFormatReader(); reader.setHints(hints);
+  for (const max of [1600, 1000, 2400]) {
+    let c = await imagenACanvas(file, max);
+    for (let giro = 0; giro < 2; giro++) {
+      try {
+        const res = reader.decode(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(c))));
+        const t = String(res.getText() || '').trim(); if (t) return [t];
+      } catch (e) { }
+      c = rotar(c);
+    }
+  }
+  return [];
+}
+let leyendoFoto = false;
+async function fotoCodigo(file) {
+  if (leyendoFoto) return; leyendoFoto = true;
+  const box = $('#cres'); S.carga.item = null; S.carga.cands = []; S.carga.q = '';
+  if (box) box.innerHTML = '<div class="notice info small">Leyendo el código de la foto…</div>';
+  let codes = [];
+  try { codes = await leerCodigos(file); }
+  catch (e) { leyendoFoto = false; if ($('#cres')) $('#cres').innerHTML = '<div class="notice bad">No se pudo cargar el lector de códigos. Revisá la conexión y probá de nuevo, o escribí el código a mano.</div>'; return; }
+  leyendoFoto = false;
+  const b = $('#cres'); if (!b) return;
+  if (!codes.length) { b.innerHTML = '<div class="notice warn">No encontré un código en la foto. Sacala de cerca, con la etiqueta enfocada, bien iluminada y sin reflejos; o escribí el código a mano.</div>'; return; }
+  if (codes.length === 1) { usarCodigo(codes[0]); return; }
+  b.innerHTML = `<div class="small muted" style="margin-bottom:6px">La foto tiene ${codes.length} códigos. Elegí el de la etiqueta:</div><div class="cands">${codes.map(c => `<button data-cod="${esc(c)}"><span class="cod">${esc(c)}</span><span></span><span></span></button>`).join('')}</div>`;
+  b.querySelectorAll('[data-cod]').forEach(x => x.onclick = () => usarCodigo(x.dataset.cod));
+}
+function usarCodigo(c) { const sc = $('#cscan'); if (sc) sc.value = c; toast('Código leído: ' + c); buscarCarga(c); }
+function factsHtml(item) {
+  const f = S.porCod.get(item.c) || {}; const ub = ($('#cubic') || {}).value?.trim().toUpperCase() || '';
+  const yaAqui = (f.ubics || []).find(u => u[0] === ub && !(f.arrastre && f.arrastre.ubics.includes(ub)));
+  return `<div><b>${fN(f.x)}</b><span class="small muted">Sistema</span></div><div><b>${f.contado == null ? '—' : fN(f.contado)}</b><span class="small muted">Ya contado</span></div><div><b class="${difCls(f.dif)}">${fSign(f.dif)}</b><span class="small muted">Dif. actual</span></div>
+  ${(f.ubics || []).length ? `<div style="grid-column:1/-1" class="small">Contado en: ${f.ubics.map(u => `<span class="mono">${esc(u[0])}</span> (${fN(u[1])})`).join(' · ')}</div>` : ''}
+  ${yaAqui ? `<div style="grid-column:1/-1" class="notice warn small">Este ítem ya tiene ${fN(yaAqui[1])} contado en ${esc(ub)}. Si es un recuento del mismo lugar, anulá el anterior desde Ítems.</div>` : ''}
+  ${yaAqui ? '' : avisoCierre(f, ub)}`;
+}
+// Aviso al escanear un artículo que ya se cerró: ¿la ubicación es nueva (se suma) o ya relevada (reemplaza)?
+function avisoCierre(f, ub) {
+  if (!f.cierre) return '';
+  const cu = f.cierreUbics || [], fecha = esc(fF(f.cierre.fecha));
+  const lista = cu.map(u => `<span class="mono">${esc(u[0])}</span> (${fN(u[1])})`).join(', ');
+  const base = `Ya relevado el ${fecha} con ${fN(f.cierre.contado)} u.${lista ? ' en ' + lista : ''}.`;
+  let txt, cls = 'info';
+  if (!ub) txt = `${base} Completá la ubicación para saber si este conteo se suma o reemplaza.`;
+  else {
+    const enCierre = cu.find(u => u[0] === ub);
+    if (enCierre) { cls = 'warn'; txt = `<span class="mono">${esc(ub)}</span> ya se contó en el cierre del ${fecha} con ${fN(enCierre[1])} u. Este conteo reemplaza esa ubicación; el resto se mantiene.`; }
+    else txt = `${base} <strong class="mono">${esc(ub)}</strong> es una ubicación nueva: lo que cuentes se suma al total relevado.`;
+  }
+  return `<div style="grid-column:1/-1" class="notice ${cls} small">${txt}</div>`;
+}
+function renderResultado() {
+  const box = $('#cres'); if (!box) return;
+  const it = S.carga.item;
+  if (it) {
+    const m = S.maestro.get(it.c) || { c: it.c, d: '', u: '' };
+    const ex = S.carga.bar && S.equiv.get(S.carga.bar);
+    const nuevaEq = S.carga.bar && !(ex && ex.cods.has(it.c));
+    box.innerHTML = `<div class="item-card">
+      <div class="toolbar"><span class="cod">${esc(m.c)}</span><span class="pill p-info">por ${esc(it.via)}</span>${estadoPill(S.porCod.get(it.c) || { estado: 'pendiente' })}</div>
+      <div class="desc">${esc(m.d)}</div>
+      <div class="small muted">Ubicación en sistema: <span class="mono">${esc(m.u || '—')}</span></div>
+      <div class="facts" id="citemfacts">${factsHtml(it)}</div>
+      <div class="row3">
+        <div class="field"><label for="cqty">Cantidad</label><input id="cqty" class="qty" type="number" inputmode="decimal" min="0" step="any" value="1"></div>
+        <div class="field"><label for="cbar">Código impreso</label><input id="cbar" class="mono" value="${esc(S.carga.bar)}" placeholder="Opcional"></div>
+        <div class="field"><label>&nbsp;</label><button class="btn primary" id="cadd">Registrar conteo</button></div>
+      </div>
+      <label class="etq-row" for="cetq"><input type="checkbox" id="cetq"><span>Ticket nuevo pegado</span><b class="etq-si">Sí, OK</b><b class="etq-no">No</b></label>
+      <div id="cqwarn"></div>
+      ${nuevaEq ? `<div class="small muted">Se va a guardar la equivalencia <span class="mono">${esc(S.carga.bar)}</span> → <span class="mono">${esc(m.c)}</span>.</div>` : ''}
+      <div><button class="link small" id="ccancel">Cancelar</button></div>
+    </div>`;
+    const qty = $('#cqty'); qty.focus(); qty.select();
+    qty.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); registrar(); } };
+    $('#cadd').onclick = registrar;
+
+    $('#ccancel').onclick = () => { S.carga.item = null; renderResultado(); const sc = $('#cscan'); sc.value = ''; sc.focus(); };
+    return;
+  }
+  if (S.carga.q && !S.carga.cands.length) { box.innerHTML = `<div class="notice warn">No encontré "${esc(S.carga.q)}". Probá buscando por descripción (por ejemplo: <i>manija puerta der</i>) o por número de artículo.</div>`; return; }
+  if (S.carga.cands.length) {
+    box.innerHTML = `<div class="small muted" style="margin-bottom:6px">${S.carga.bar ? `El código <span class="mono">${esc(S.carga.bar)}</span> no está asociado. Elegí el artículo correcto:` : 'Elegí el artículo:'}</div>
+    <div class="cands">${S.carga.cands.map(o => { const m = S.maestro.get(o.c) || { d: '' }; const f = S.porCod.get(o.c) || {}; return `<button data-c="${esc(o.c)}"><span class="cod">${esc(o.c)}</span><span>${esc(m.d)}${o.why ? `<br><span class="small muted">${esc(o.why)}</span>` : ''}</span><span class="small muted">Sist. ${fN(f.x)}</span></button>`; }).join('')}</div>
+    ${S.carga.bar ? `<div class="small muted" style="margin-top:6px">¿No aparece? Buscá por descripción escribiendo en el campo de arriba; el código impreso se conserva.</div>` : ''}`;
+    box.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { S.carga.item = { c: b.dataset.c, via: 'selección manual' }; renderResultado(); });
+    return;
+  }
+  box.innerHTML = '';
+}
+let registrando = false;
+async function registrar() {
+  if (registrando || !S.carga.item) return;
+  const q = parseFloat(($('#cqty').value || '').replace(',', '.'));
+  const u = ($('#cubic').value || '').trim().toUpperCase();
+  const r = ($('#cresp').value || '').trim();
+  if (!(q > 0)) { toast('Ingresá una cantidad mayor a cero.'); return; }
+  if (!u) { toast('Completá la ubicación antes de registrar.'); $('#cubic').focus(); return; }
+  LS.set('ubicacion', u); LS.set('responsable', r);
+  const m = S.maestro.get(S.carga.item.c) || { d: '' };
+  const bar = ($('#cbar').value || '').replace(/\s+/g, '');
+  const et = !!(($('#cetq') || {}).checked);
+  const linea = { k: 'a' + Math.random().toString(36).slice(2, 12), c: S.carga.item.c, b: bar, d: m.d, q, e: '', u, t: ahora(), r, et };
+
+  registrando = true; $('#cadd').disabled = true;
+  try {
+    let se = sesionActual();
+    if (!se) {
+      const id = nuevoId('app'); LS.set('sesionActual', id);
+      const doc = { origen: 'app', creado: ahora(), actualizado: ahora(), user: S.uid, responsable: r, archivo: '', guardado: '', lineas: [linea] };
+      await escribir('sesiones/' + id, () => conReintento(() => S.db.doc('sesiones/' + id).set(doc)));
+    } else {
+      const path = 'sesiones/' + se.id;
+      await escribir(path, () => conReintento(async () => {
+        const sn = await S.db.doc(path).get(); const d = sn.data();
+        await S.db.doc(path).update({ lineas: [...(d.lineas || []), linea], actualizado: ahora() });
+      }));
+    }
+    toast(`Registrado: ${fN(q)} × ${linea.c} en ${u}${et ? ' · ticket pegado' : ' · sin ticket nuevo'}`);
+    S.carga.item = null; S.carga.cands = []; S.carga.q = ''; S.carga.bar = '';
+    renderResultado(); const sc = $('#cscan'); sc.value = ''; sc.focus();
+  } catch (e) { toast(errMsg(e), 5000); const b = $('#cadd'); if (b) b.disabled = false; }
+  finally { registrando = false; }
+}
+
+// ================== Vista: Cierres y ajustes ==================
+function vAjustes(sec) {
+  const curso = S.filas.filter(f => f.estado === 'curso');
+  const q = S.ui.ajQ.trim().toUpperCase().split(/\s+/).filter(Boolean);
+  const lista = curso.filter(f => (!S.ui.ajSoloDif || f.dif) && (!q.length || q.every(t => (f.c + ' ' + f.d + ' ' + f.ubics.map(u => u[0]).join(' ')).toUpperCase().includes(t))))
+    .sort((a, b) => Math.abs(b.dif * b.co) - Math.abs(a.dif * a.co) || a.c.localeCompare(b.c, 'es', { numeric: true }));
+  for (const c of [...S.ui.ajSel]) if (!S.porCod.get(c) || S.porCod.get(c).estado !== 'curso') S.ui.ajSel.delete(c);
+  const sel = curso.filter(f => S.ui.ajSel.has(f.c));
+  const t = sel.reduce((o, f) => { o.n++; if (f.dif < 0) { o.fu += f.dif; o.f$ += f.dif * f.co; } else if (f.dif > 0) { o.su += f.dif; o.s$ += f.dif * f.co; } else o.ok++; return o; }, { n: 0, fu: 0, f$: 0, su: 0, s$: 0, ok: 0 });
+  const fs = S.meta ? S.meta.fechaDato : '';
+  const desfase = f => fs && f.ult && horas(fs, f.ult) > 24;
+  const nDesf = sel.filter(desfase).length;
+  const nSinTk = sel.filter(f => f.etq !== 'ok').length;
+  const lotes = S.ajustes.slice().sort((a, b) => b.creado.localeCompare(a.creado));
+  sec.innerHTML = `
+  <div><h2>Cierres y ajustes</h2><p class="lead">Elegí los ítems ya contados en todas sus ubicaciones y cerralos. Cada cierre genera un lote con la diferencia por artículo contra la existencia del sistema, listo para cargar el ajuste. Lo que se cierra queda Relevado.</p></div>
+  <div class="notice info">La diferencia se calcula contra el informe de existencias del <b>${esc(fF(fs))}</b>. Para un corte limpio, importá existencias actualizadas el mismo día del conteo, antes de cerrar.</div>
+  <div class="panel">
+    <div class="panel-head"><h3>Ítems en curso (${curso.length})</h3></div>
+    <div class="toolbar" style="margin-bottom:10px">
+      <input class="search" id="ajq" type="search" placeholder="Filtrar por código, descripción o ubicación contada" value="${esc(S.ui.ajQ)}">
+      <button class="chip" id="ajdif" aria-pressed="${S.ui.ajSoloDif}">Solo con diferencia</button>
+      <button class="btn sm" id="ajall">Seleccionar los ${lista.length} filtrados</button>
+      <button class="btn sm" id="ajnone">Limpiar selección</button>
+    </div>
+    <div class="tbl-wrap" style="max-height:480px;overflow:auto"><table><thead><tr><th></th><th>Artículo</th><th>Descripción</th><th>Ubic. contadas</th><th class="n">Sistema</th><th class="n">Contado</th><th class="n">Dif.</th><th class="n">Dif. $</th><th>Último conteo</th></tr></thead><tbody>
+    ${lista.slice(0, 600).map(f => `<tr><td><input type="checkbox" class="cb" data-s="${esc(f.c)}" ${S.ui.ajSel.has(f.c) ? 'checked' : ''} aria-label="Seleccionar ${esc(f.c)}"></td><td class="cod"><button class="link mono" data-c="${esc(f.c)}">${esc(f.c)}</button></td><td>${esc(f.d)}${marcas(f)} ${f.etq && f.etq !== 'ok' ? etqPill(f) : ''}</td><td class="mono">${f.ubics.map(u => esc(u[0])).join(', ')}</td><td class="n">${fN(f.x)}</td><td class="n">${fN(f.contado)}</td><td class="n ${difCls(f.dif)}">${fSign(f.dif)}</td><td class="n ${difCls(f.dif)}">${f$(f.dif * f.co)}</td><td class="mono">${esc(fF(f.ult))}${desfase(f) ? ' <span class="pill p-curso" title="Más de 24 h entre el conteo y el informe del sistema">desfase</span>' : ''}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">No hay ítems en curso con ese filtro</td></tr>'}
+    </tbody></table></div>
+    <div class="toolbar" style="margin-top:12px;justify-content:space-between">
+      <div class="small">${t.n ? `<b>${t.n}</b> seleccionados · faltantes <span class="neg">${fN(t.fu)} u. (${f$(t.f$)})</span> · sobrantes <span class="pos">+${fN(t.su)} u. (${f$(t.s$)})</span> · ${t.ok} sin diferencia` : '<span class="muted">Seleccioná ítems para cerrar</span>'}</div>
+      <div class="toolbar"><input id="ajnota" placeholder="Nota del lote (ej.: estante 5)" style="min-width:200px"><button class="btn primary" id="ajcerrar" ${t.n && S.canWrite ? '' : 'disabled'}>Cerrar ${t.n || ''} ítems y generar ajuste</button></div>
+    </div>
+    ${nSinTk ? `<div class="notice warn" style="margin-top:10px">${nSinTk} de los seleccionados no tienen el ticket nuevo confirmado en todas sus ubicaciones. Podés cerrarlos igual y marcar el ticket después desde el detalle del ítem.</div>` : ''}
+    ${nDesf ? `<div class="notice warn" style="margin-top:10px">${nDesf} de los seleccionados se contaron con más de 24 h de diferencia respecto del informe del sistema. Las ventas o compras de ese lapso pueden aparecer como diferencia.</div>` : ''}
+  </div>
+  <div class="panel"><div class="panel-head"><h3>Lotes de ajuste (${lotes.length})</h3></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Nota</th><th>Por</th><th class="n">Ítems</th><th class="n">Con dif.</th><th class="n">Faltantes $</th><th class="n">Sobrantes $</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${lotes.map(a => { const r = a.lineas.reduce((o, l) => { const d = l[1] - l[2]; if (d) o.n++; if (d < 0) o.f += d * l[3]; if (d > 0) o.s += d * l[3]; return o; }, { n: 0, f: 0, s: 0 }); return `<tr class="${a.anulado ? 'anulada' : ''}"><td class="mono">${esc(fF(a.creado))}</td><td>${esc(a.nota || '—')}</td><td class="small">${esc(nombre(a.user))}</td><td class="n">${a.lineas.length}</td><td class="n">${r.n}</td><td class="n neg">${f$(r.f)}</td><td class="n pos">${f$(r.s)}</td><td>${a.anulado ? '<span class="pill p-bad">Anulado</span>' : a.cargado ? `<span class="pill p-rel" title="Cargado en el sistema el ${esc(fF(a.cargadoEl))}">Cargado</span>` : '<span class="pill p-curso">Sin cargar</span>'}</td><td style="white-space:nowrap"><button class="btn sm" data-dl="${esc(a.id)}">Excel</button> ${!a.anulado && !a.cargado && S.canWrite ? `<button class="btn sm" data-carg="${esc(a.id)}">Marcar cargado</button> <button class="btn sm danger" data-anl="${esc(a.id)}">Anular</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="9" class="empty">Todavía no se cerró ningún lote</td></tr>'}
+    </tbody></table></div>
+    <p class="small muted" style="margin:8px 0 0">Cuando cargues el ajuste en el sistema, marcá el lote como cargado: la foto 0 lo usa para separar ajustes de movimientos, y un lote cargado ya no se puede anular. Anular un lote sin cargar devuelve sus ítems a En curso con los mismos conteos.</p>
+  </div>`;
+  let deb; $('#ajq', sec).oninput = e => { clearTimeout(deb); deb = setTimeout(() => { S.ui.ajQ = e.target.value; renderKeepFocus('#ajq'); }, 220); };
+  $('#ajdif', sec).onclick = () => { S.ui.ajSoloDif = !S.ui.ajSoloDif; render(true); };
+  $('#ajall', sec).onclick = () => { lista.forEach(f => S.ui.ajSel.add(f.c)); render(true); };
+  $('#ajnone', sec).onclick = () => { S.ui.ajSel.clear(); render(true); };
+  sec.querySelectorAll('[data-s]').forEach(cb => cb.onchange = () => { cb.checked ? S.ui.ajSel.add(cb.dataset.s) : S.ui.ajSel.delete(cb.dataset.s); render(true); });
+  sec.querySelectorAll('button[data-c]').forEach(b => b.onclick = () => abrirItem(b.dataset.c));
+  sec.querySelectorAll('[data-dl]').forEach(b => b.onclick = () => descargarLote(S.ajustes.find(a => a.id === b.dataset.dl)));
+  sec.querySelectorAll('[data-anl]').forEach(b => b.onclick = () => confirmarBoton(b, '¿Anular?', async () => {
+    await escribir('ajustes/' + b.dataset.anl, () => conReintento(() => S.db.doc('ajustes/' + b.dataset.anl).update({ anulado: true, anuladoEl: ahora(), anuladoPor: S.uid })));
+    toast('Lote anulado. Sus ítems vuelven a En curso.');
+  }));
+  sec.querySelectorAll('[data-carg]').forEach(b => b.onclick = () => confirmarBoton(b, '¿Ya está en el sistema?', async () => {
+    await escribir('ajustes/' + b.dataset.carg, () => conReintento(() => S.db.doc('ajustes/' + b.dataset.carg).update({ cargado: true, cargadoEl: ahora(), cargadoPor: S.uid })));
+    toast('Lote marcado como cargado en el sistema.');
+  }));
+  const bc = $('#ajcerrar', sec);
+  bc.onclick = () => confirmarBoton(bc, `Confirmar cierre de ${t.n}`, async () => {
+    const id = nuevoId('aj');
+    const doc = { creado: ahora(), user: S.uid, nota: ($('#ajnota').value || '').trim(), snap: S.meta ? S.meta.snap : '', fechaSistema: fs, anulado: false,
+      lineas: sel.map(f => { const ab = S.cons.lineasPorItem.get(f.c).filter(l => !l.x && !S.cons.consumidas.has(l.k)); return [f.c, f.contado, f.x, f.co, ab.map(l => l.k), f.d, f.ubics.map(u => u[0] + ':' + u[1]).join(' | ')]; }) };
+    if (JSON.stringify(doc).length > 240000) { toast('Demasiados ítems en un solo lote. Cerralos en dos tandas.', 5000); return; }
+    await escribir('ajustes/' + id, () => conReintento(() => S.db.doc('ajustes/' + id).set(doc)));
+    S.ui.ajSel.clear(); toast(`Lote cerrado con ${doc.lineas.length} ítems.`);
+    modalLote({ id, ...doc });
+  });
+}
+function filasLote(a) {
+  return [['Artículo', 'Descripción', 'Contado', 'Existencia sistema', 'Ajuste (contado − sistema)', 'Costo medio', 'Ajuste $', 'Ubicaciones contadas']].concat(
+    a.lineas.map(l => [l[0], l[5] || '', l[1], l[2], l[1] - l[2], l[3], Math.round((l[1] - l[2]) * l[3] * 100) / 100, l[6] || '']));
+}
+function descargarLote(a) { if (a) exportar(`ajuste_${a.creado.slice(0, 10)}_${a.id.slice(-5)}.xlsx`, filasLote(a), 'Ajuste', { 'Lote': a.id, 'Fecha cierre': a.creado, 'Existencias al': a.fechaSistema, 'Nota': a.nota || '', 'Estado': a.anulado ? 'ANULADO' : a.cargado ? 'Cargado en el sistema' : 'Sin cargar' }); }
+function modalLote(a) {
+  const L = $('#layer'); const conDif = a.lineas.filter(l => l[1] - l[2]).length;
+  L.innerHTML = `<div class="modal-bg"></div><div class="modal" role="dialog" aria-modal="true"><h2>Lote cerrado</h2><p>${a.lineas.length} ítems quedaron Relevados. ${conDif} tienen diferencia para ajustar en el sistema.</p><div class="toolbar"><button class="btn primary" id="mdl">Descargar Excel del ajuste</button><button class="btn" id="mok">Listo</button></div></div>`;
+  $('#mdl').onclick = () => descargarLote(a); $('#mok').onclick = () => L.innerHTML = '';
+}
+async function exportar(nombreArch, aoa, hoja, meta) {
+  try {
+    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = aoa[0].map((h, i) => ({ wch: Math.min(40, Math.max(String(h).length + 2, ...aoa.slice(1, 200).map(r => String(r[i] ?? '').length + 1))) }));
+    XLSX.utils.book_append_sheet(wb, ws, hoja);
+    if (meta) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(Object.entries(meta)), 'Datos');
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    const dl = await window.claude?.use?.('downloads');
+    if (!dl) { toast('La descarga no está disponible en esta vista.'); return; }
+    await dl.save({ filename: nombreArch, data: buf });
+  } catch (e) { if (e && e.code !== 'cancelled' && e.code !== 'declined') toast('No se pudo generar el Excel (' + (e.code || e.message || 'error') + ').'); }
+}
+
+// ================== Vista: Foto 0 ==================
+// Conciliación por artículo: Foto actual = Foto 0 + ajustes cargados + movimientos del sistema.
+// Todo se valoriza al costo medio actual para que el puente cierre exacto.
+function conciliacion() {
+  const f0 = S.foto0Meta; if (!f0) return null;
+  const lotes = S.ajustes.filter(a => !a.anulado && a.creado >= f0.marcado);
+  const aj = new Map();
+  for (const a of lotes) for (const l of a.lineas) { let o = aj.get(l[0]); if (!o) { o = { carg: 0, pend: 0 }; aj.set(l[0], o); } o[a.cargado ? 'carg' : 'pend'] += l[1] - l[2]; }
+  const cods = new Set([...S.foto0.keys(), ...S.maestro.keys(), ...aj.keys()]);
+  const rows = [], T = { v0: 0, va: 0, falt: 0, sobr: 0, mov: 0, pendF: 0, pendS: 0, base: 0, baseV: 0, cov: 0, covV: 0, sinCargar: lotes.filter(a => !a.cargado).length };
+  for (const c of cods) {
+    const a0 = S.foto0.get(c), m = S.maestro.get(c), f = S.porCod.get(c) || {}, o = aj.get(c) || { carg: 0, pend: 0 };
+    const x0 = a0 ? a0.x : 0, xa = m ? m.x : 0, co = (m && m.co) || (a0 && a0.co) || 0;
+    if (!x0 && !xa && !o.carg && !o.pend) continue;
+    const mov = xa - x0 - o.carg;
+    const rel = f.contado != null ? f.contado : f.cierre ? f.cierre.contado : null;
+    rows.push({ c, d: (m && m.d) || (a0 && a0.d) || '', x0, xa, co, carg: o.carg, pend: o.pend, mov, rel, f });
+    T.v0 += x0 * co; T.va += xa * co; T.mov += mov * co;
+    if (o.carg < 0) T.falt += o.carg * co; else T.sobr += o.carg * co;
+    if (o.pend < 0) T.pendF += o.pend * co; else T.pendS += o.pend * co;
+    if (x0 > 0) { T.base++; T.baseV += x0 * co; if (f.estado && f.estado !== 'pendiente') { T.cov++; T.covV += x0 * co; } }
+  }
+  return { rows, T };
+}
+function cascada(T) {
+  const pasos = [
+    { n: 'Foto 0', v: T.v0, tot: true, col: 'var(--ink)' },
+    { n: 'Faltantes', v: T.falt, col: 'var(--bad)' },
+    { n: 'Sobrantes', v: T.sobr, col: 'var(--info)' },
+    { n: 'Movimientos', v: T.mov, col: 'var(--gold)' },
+    { n: 'Foto actual', v: T.va, tot: true, col: 'var(--ink)' }];
+  let acc = 0;
+  const bars = pasos.map(p => { const a = p.tot ? 0 : acc, b = p.tot ? p.v : acc + p.v; acc = b; return { ...p, lo: Math.min(a, b), hi: Math.max(a, b), fin: b }; });
+  const max = Math.max(1, ...bars.map(b => b.hi)), min = Math.min(0, ...bars.map(b => b.lo));
+  const W = 640, H = 250, top = 28, bot = 36, bw = W / bars.length;
+  const y = v => top + (max - v) / (max - min || 1) * (H - top - bot);
+  let g = `<line x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" style="stroke:var(--line)"/>`;
+  bars.forEach((b, i) => {
+    const x = i * bw + bw * .18, w = bw * .64, yt = y(b.hi), h = Math.max(1.5, y(b.lo) - yt);
+    g += `<rect x="${x}" y="${yt}" width="${w}" height="${h}" rx="2" style="fill:${b.col};opacity:${b.tot ? .82 : 1}"/>`;
+    g += `<text x="${x + w / 2}" y="${yt - 7}" text-anchor="middle" style="fill:var(--ink);font-weight:600">${b.tot ? f$(b.v) : (b.v > 0 ? '+' : '') + f$(b.v).replace('$ -', '−$ ')}</text>`;
+    g += `<text x="${x + w / 2}" y="${H - 12}" text-anchor="middle" style="fill:var(--muted)">${b.n}</text>`;
+    if (i < bars.length - 1) g += `<line x1="${x + w}" x2="${(i + 1) * bw + bw * .18}" y1="${y(b.fin)}" y2="${y(b.fin)}" style="stroke:var(--muted);stroke-dasharray:3 3"/>`;
+  });
+  return `<svg class="cascada" viewBox="0 0 ${W} ${H}" role="img" aria-label="Puente de valor entre la foto 0 y la foto actual">${g}</svg>`;
+}
+async function guardarFoto0() {
+  const id = nuevoId('f0'); const items = [...S.maestro.values()].map(m => [m.c, m.x, m.co, m.d]);
+  const N = Math.ceil(items.length / Core.CHUNK_MAESTRO);
+  for (let i = 0; i < N; i++) await conReintento(() => S.db.doc('foto0/' + id + '-f' + i).set({ i, items: items.slice(i * Core.CHUNK_MAESTRO, (i + 1) * Core.CHUNK_MAESTRO) }));
+  await conReintento(() => S.db.doc('config/foto0').set({ id, chunks: N, total: items.length, fechaDato: S.meta.fechaDato, archivo: S.meta.archivo || '', importacion: S.meta.importacion || '', marcado: ahora(), user: S.uid, valor: Math.round(items.reduce((a, i) => a + Math.max(i[1], 0) * i[2], 0)) }));
+  for (const k of [...S.foto0Chunks.keys()]) if (!k.startsWith(id + '-')) { try { await S.db.doc('foto0/' + k).delete(); } catch (e) { } }
+  toast('Foto 0 guardada.');
+}
+function vFoto0(sec) {
+  const f0 = S.foto0Meta;
+  sec.innerHTML = `<div><h2>Foto 0 contra foto actual</h2><p class="lead">La foto 0 es el stock del sistema al empezar el relevamiento y queda congelada. La foto actual es el último informe importado. La diferencia entre las dos se explica con los ajustes del relevamiento y los movimientos normales del sistema (ventas, compras, devoluciones).</p></div>`;
+  if (!f0) {
+    sec.insertAdjacentHTML('beforeend', `<div class="panel" style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><h3>Todavía no hay foto 0</h3>
+      <p class="small" style="margin:0">Guardá como foto 0 las existencias cargadas ahora${S.meta ? ` (informe al <b>${esc(fF(S.meta.fechaDato))}</b>, ${nf0.format(S.maestro.size)} artículos)` : ''}. Hacelo una sola vez, al empezar el relevamiento. Las importaciones siguientes no la modifican.</p>
+      <button class="btn primary" id="f0save" ${S.meta && S.maestro.size && S.canWrite ? '' : 'disabled'}>Guardar existencias actuales como foto 0</button></div>`);
+    const b = $('#f0save', sec); b.onclick = () => confirmarBoton(b, 'Confirmar foto 0', guardarFoto0);
+    return;
+  }
+  if (S.foto0Snap !== f0.id) { sec.insertAdjacentHTML('beforeend', '<div class="empty">Cargando la foto 0…</div>'); return; }
+  const { rows, T } = conciliacion(); const pct = (a, b) => b ? Math.round(a / b * 1000) / 10 : 0;
+  const F = S.ui.f0Filtro, q = S.ui.f0Q.trim().toUpperCase().split(/\s+/).filter(Boolean);
+  const P = { aj: r => r.carg || r.pend, pend: r => r.pend, mov: r => r.mov, sinrel: r => r.x0 > 0 && (!r.f.estado || r.f.estado === 'pendiente'), todos: () => true };
+  const lista = rows.filter(r => P[F](r) && (!q.length || q.every(t => (r.c + ' ' + r.d).toUpperCase().includes(t))))
+    .sort((a, b) => Math.abs((b.carg + b.pend) * b.co) - Math.abs((a.carg + a.pend) * a.co) || Math.abs(b.mov * b.co) - Math.abs(a.mov * a.co) || a.c.localeCompare(b.c, 'es', { numeric: true }));
+  const vis = lista.slice(0, S.ui.f0Lim);
+  const sd = v => v ? `<span class="${difCls(v)}">${fSign(v)}</span>` : '<span class="muted">0</span>';
+  sec.insertAdjacentHTML('beforeend', `
+  <div class="grid kpis">
+    <div class="kpi"><span class="label">Foto 0</span><span class="v">${f$(T.v0)}</span><span class="s">existencias al ${esc(fF(f0.fechaDato))}</span></div>
+    <div class="kpi"><span class="label">Foto actual</span><span class="v">${f$(T.va)}</span><span class="s">existencias al ${esc(fF(S.meta && S.meta.fechaDato))}</span></div>
+    <div class="kpi bad"><span class="label">Ajustes cargados</span><span class="v">${f$(T.falt + T.sobr)}</span><span class="s">faltantes ${f$(T.falt)} · sobrantes ${f$(T.sobr)}</span></div>
+    <div class="kpi gold"><span class="label">Movimientos del sistema</span><span class="v">${f$(T.mov)}</span><span class="s">ventas, compras y otros, por diferencia</span></div>
+    <div class="kpi ${T.pendF + T.pendS ? 'gold' : ''}"><span class="label">Ajustes sin cargar</span><span class="v">${f$(T.pendF + T.pendS)}</span><span class="s">${T.sinCargar} lote(s) cerrados que falta cargar en el sistema</span></div>
+    <div class="kpi ok"><span class="label">Cobertura de la foto 0</span><span class="v">${pct(T.covV, T.baseV)}%</span><span class="s">del valor · ${nf0.format(T.cov)} de ${nf0.format(T.base)} artículos contados</span></div>
+  </div>
+  <div class="panel"><div class="panel-head"><h3>De la foto 0 a la foto actual</h3><span class="sp small muted">a costo medio actual</span></div>
+    <div style="overflow-x:auto">${cascada(T)}</div>
+    ${T.sinCargar ? `<p class="small muted" style="margin:8px 0 0">Hay ${T.sinCargar} lote(s) sin marcar como cargados (${f$(T.pendF + T.pendS)}). Mientras no estén en el sistema, no aparecen en la foto actual ni en el puente.</p>` : ''}</div>
+  <div class="toolbar"><input class="search" id="f0q" type="search" placeholder="Buscar código o descripción" value="${esc(S.ui.f0Q)}">
+    <div class="chips">${[['aj', 'Con ajuste'], ['pend', 'Ajuste sin cargar'], ['mov', 'Con movimientos'], ['sinrel', 'Sin relevar'], ['todos', 'Todos']].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${F === k}">${t}<span class="n">${nf0.format(rows.filter(P[k]).length)}</span></button>`).join('')}</div>
+    <button class="btn" id="f0exp">Exportar a Excel</button></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Artículo</th><th>Descripción</th><th class="n">Foto 0</th><th class="n">Relevado</th><th class="n">Ajuste cargado</th><th class="n">Ajuste sin cargar</th><th class="n">Movimientos</th><th class="n">Foto actual</th><th class="n">Ajuste $</th><th>Estado</th></tr></thead><tbody>
+  ${vis.map(r => `<tr class="click" data-c="${esc(r.c)}"><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td class="n">${fN(r.x0)}</td><td class="n">${r.rel == null ? '—' : fN(r.rel)}</td><td class="n">${sd(r.carg)}</td><td class="n">${sd(r.pend)}</td><td class="n">${r.mov ? fSign(r.mov) : '0'}</td><td class="n">${fN(r.xa)}</td><td class="n ${difCls(r.carg + r.pend)}">${f$((r.carg + r.pend) * r.co)}</td><td>${estadoPill(r.f.estado ? r.f : { estado: 'pendiente' })}</td></tr>`).join('') || '<tr><td colspan="10" class="empty">No hay artículos con ese filtro</td></tr>'}
+  </tbody></table></div>
+  ${lista.length > vis.length ? `<div class="more"><button class="btn" id="f0more">Mostrar ${nf0.format(Math.min(500, lista.length - vis.length))} más</button></div>` : ''}
+  <div class="small muted">Foto 0 guardada el ${esc(fF(f0.marcado))} por ${esc(nombre(f0.user))} desde ${esc(f0.archivo || 'el informe vigente')}. ${S.canWrite ? '<button class="link" id="f0repl">Reemplazar la foto 0 por las existencias actuales</button>' : ''}</div>`);
+  let deb; $('#f0q', sec).oninput = e => { clearTimeout(deb); deb = setTimeout(() => { S.ui.f0Q = e.target.value; S.ui.f0Lim = 300; renderKeepFocus('#f0q'); }, 220); };
+  sec.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.ui.f0Filtro = b.dataset.f; S.ui.f0Lim = 300; render(true); });
+  sec.querySelectorAll('tr[data-c]').forEach(tr => tr.onclick = () => abrirItem(tr.dataset.c));
+  const more = $('#f0more', sec); if (more) more.onclick = () => { S.ui.f0Lim += 500; render(true); };
+  const repl = $('#f0repl', sec); if (repl) repl.onclick = () => confirmarBoton(repl, 'Confirmar: la foto 0 anterior se descarta', guardarFoto0);
+  $('#f0exp', sec).onclick = () => exportar('foto0_vs_actual_' + ahora().slice(0, 10) + '.xlsx', [['Artículo', 'Descripción', 'Foto 0', 'Relevado', 'Ajuste cargado', 'Ajuste sin cargar', 'Movimientos del sistema', 'Foto actual', 'Costo medio', 'Ajuste $', 'Movimientos $', 'Estado']].concat(lista.map(r => [r.c, r.d, r.x0, r.rel, r.carg, r.pend, r.mov, r.xa, r.co, Math.round((r.carg + r.pend) * r.co * 100) / 100, Math.round(r.mov * r.co * 100) / 100, r.f.estado || 'pendiente'])), 'Conciliación', { 'Foto 0 al': f0.fechaDato, 'Foto actual al': S.meta ? S.meta.fechaDato : '', 'Valor foto 0': Math.round(T.v0), 'Faltantes cargados': Math.round(T.falt), 'Sobrantes cargados': Math.round(T.sobr), 'Movimientos': Math.round(T.mov), 'Valor foto actual': Math.round(T.va), 'Ajustes sin cargar': Math.round(T.pendF + T.pendS), 'Valorizado a': 'costo medio actual' });
+}
+
+// ================== Vista: Códigos impresos ==================
+function vEquiv(sec) {
+  const lista = [...S.equiv.values()].map(e => {
+    const cods = [...e.cods.keys()]; const conflicto = cods.length > 1;
+    const sinNum = !conflicto && !e.ticket && !e.b.toUpperCase().includes(Core.numeroArticulo(cods[0]).toUpperCase());
+    return { ...e, codsL: cods, conflicto, sinNum, veces: [...e.cods.values()].reduce((a, b) => a + b, 0) };
+  });
+  const q = S.ui.eqQ.trim().toUpperCase();
+  const F = S.ui.eqFiltro;
+  const vis = lista.filter(e => (F === 'todas' || (F === 'conf' && e.conflicto) || (F === 'rev' && e.sinNum)) && (!q || (e.b + ' ' + e.codsL.join(' ') + ' ' + e.codsL.map(c => (S.maestro.get(c) || {}).d).join(' ')).toUpperCase().includes(q)))
+    .sort((a, b) => (b.conflicto - a.conflicto) || (b.sinNum - a.sinNum) || a.b.localeCompare(b.b));
+  const arts = new Set(lista.flatMap(e => e.codsL));
+  sec.innerHTML = `
+  <div><h2>Códigos impresos</h2><p class="lead">Tabla de equivalencias entre el código de la etiqueta del repuesto y el artículo del sistema. Se arma sola con cada conteo que trae código impreso.</p></div>
+  <div class="grid kpis"><div class="kpi"><span class="label">Códigos impresos</span><span class="v">${nf0.format(lista.length)}</span></div><div class="kpi"><span class="label">Artículos con código</span><span class="v">${nf0.format(arts.size)}</span></div><div class="kpi bad"><span class="label">Conflictos</span><span class="v">${lista.filter(e => e.conflicto).length}</span><span class="s">un código apunta a varios artículos</span></div><div class="kpi gold"><span class="label">A revisar</span><span class="v">${lista.filter(e => e.sinNum).length}</span><span class="s">no contiene el n° de artículo</span></div></div>
+  <div class="toolbar"><input class="search" id="eqq" type="search" placeholder="Buscar código impreso, artículo o descripción" value="${esc(S.ui.eqQ)}">
+    <div class="chips">${[['todas', 'Todas'], ['conf', 'Conflictos'], ['rev', 'A revisar']].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${F === k}">${t}</button>`).join('')}</div>
+    <button class="btn" id="eqexp">Exportar a Excel</button></div>
+  <p class="small muted" style="margin:0">"A revisar" marca etiquetas cuyo código no incluye el número del artículo. En repuestos Fiat suele coincidir, así que puede ser un error de tipeo o un reemplazo. Corregilo anulando el conteo y cargándolo de nuevo.</p>
+  <div class="tbl-wrap"><table><thead><tr><th>Código impreso</th><th>Artículo</th><th>Descripción</th><th class="n">Veces</th><th>Primera vez</th><th>Última vez</th><th></th></tr></thead><tbody>
+  ${vis.slice(0, 800).map(e => `<tr><td class="cod">${esc(e.b)}${e.ticket ? ' <span class="pill p-rel">ticket nuevo</span>' : ''}</td><td>${e.codsL.map(c => `<button class="link mono" data-c="${esc(c)}">${esc(c)}</button>`).join('<br>')}</td><td>${e.codsL.map(c => esc((S.maestro.get(c) || {}).d || '')).join('<br>')}</td><td class="n">${e.veces}</td><td class="mono">${esc(fF(e.primera))}</td><td class="mono">${esc(fF(e.ultima))}</td><td>${e.conflicto ? '<span class="pill p-bad">Conflicto</span>' : e.sinNum ? '<span class="pill p-curso">Revisar</span>' : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Sin equivalencias con ese filtro</td></tr>'}
+  </tbody></table></div>`;
+  let deb; $('#eqq', sec).oninput = e => { clearTimeout(deb); deb = setTimeout(() => { S.ui.eqQ = e.target.value; renderKeepFocus('#eqq'); }, 220); };
+  sec.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.ui.eqFiltro = b.dataset.f; render(true); });
+  sec.querySelectorAll('button[data-c]').forEach(b => b.onclick = () => abrirItem(b.dataset.c));
+  $('#eqexp', sec).onclick = () => exportar('codigos_impresos_' + ahora().slice(0, 10) + '.xlsx', [['Código impreso', 'Artículo', 'Descripción', 'Veces', 'Primera vez', 'Última vez', 'Observación']].concat(vis.flatMap(e => e.codsL.map(c => [e.b, c, (S.maestro.get(c) || {}).d || '', e.cods.get(c), e.primera, e.ultima, e.conflicto ? 'Conflicto' : e.sinNum ? 'Revisar' : '']))), 'Equivalencias');
+}
+
+// ================== Vista: Historial ==================
+function eventos() {
+  const ev = [];
+  for (const i of S.importaciones) {
+    if (i.tipo === 'existencias') ev.push({ t: i.creado, tipo: 'imp', ico: 'EX', txt: `Importó existencias del sistema al ${fF(i.fechaDato)}`, det: `${i.archivo || ''} · ${nf0.format(i.total || 0)} artículos${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios || 0)} con cambios de existencia, ${nf0.format(i.nuevos || 0)} nuevos, ${nf0.format(i.bajas || 0)} dados de baja`}`, u: i.user });
+    else ev.push({ t: i.creado, tipo: 'imp', ico: 'RV', txt: `Importó relevamiento desde Excel`, det: `${i.archivo || ''} · ${i.nuevas} líneas nuevas · ${i.duplicadas} ya cargadas · ${i.rechazadas} rechazadas`, u: i.user });
+  }
+  for (const s of S.sesiones) {
+    const ls = s.lineas || [];
+    if (s.origen === 'app') ev.push({ t: s.creado, tipo: 'cnt', ico: 'CT', txt: `Sesión de conteo en la app${s.responsable ? ' · ' + s.responsable : ''}`, det: `${ls.filter(l => !l.x).length} líneas · ubicaciones ${[...new Set(ls.map(l => l.u))].slice(0, 8).join(', ')} · última ${fF(s.actualizado)}`, u: s.user });
+    for (const l of ls) if (l.x) ev.push({ t: l.xt, tipo: 'an', ico: 'AN', txt: `Anuló un conteo de ${l.c}`, det: `${fN(l.q)} u. en ${l.u} del ${fF(l.t)}`, u: l.xu });
+  }
+  if (S.foto0Meta) { const f0 = S.foto0Meta; ev.push({ t: f0.marcado, tipo: 'imp', ico: 'F0', txt: 'Guardó la foto 0 del relevamiento', det: `existencias al ${fF(f0.fechaDato)} · ${nf0.format(f0.total || 0)} artículos · ${f$(f0.valor)}`, u: f0.user }); }
+  for (const a of S.ajustes) {
+    if (a.cargado) ev.push({ t: a.cargadoEl, tipo: 'aj', ico: 'OK', txt: `Marcó como cargado en el sistema el lote del ${fF(a.creado)}`, det: `${a.lineas.length} ítems${a.nota ? ' · ' + a.nota : ''}`, u: a.cargadoPor });
+    ev.push({ t: a.creado, tipo: 'aj', ico: 'AJ', txt: `Cerró ${a.lineas.length} ítems en un lote de ajuste${a.nota ? ' · ' + a.nota : ''}`, det: `${a.lineas.filter(l => l[1] - l[2]).length} con diferencia · existencias al ${fF(a.fechaSistema)}`, u: a.user });
+    if (a.anulado) ev.push({ t: a.anuladoEl, tipo: 'an', ico: 'AN', txt: `Anuló el lote de ajuste del ${fF(a.creado)}`, det: `${a.lineas.length} ítems volvieron a En curso`, u: a.anuladoPor });
+  }
+  return ev.filter(e => e.t).sort((a, b) => b.t.localeCompare(a.t));
+}
+function evHtml(e) { return `<div class="ev"><div class="when">${esc(fF(e.t))}</div><div class="ico ${e.tipo}">${e.ico}</div><div><div>${esc(e.txt)}</div><div class="small muted">${esc(e.det)}${e.u ? ' · ' + esc(nombre(e.u)) : ''}</div></div></div>`; }
+function vHistorial(sec) {
+  const F = S.ui.hiFiltro; const all = eventos(); const l = all.filter(e => F === 'todos' || e.tipo === F);
+  sec.innerHTML = `<div><h2>Historial</h2><p class="lead">Todo lo que pasó en el relevamiento: importaciones, sesiones de conteo, cierres y anulaciones. Nada se borra; las correcciones quedan registradas como anulaciones.</p></div>
+  <div class="chips">${[['todos', 'Todo'], ['imp', 'Importaciones'], ['cnt', 'Conteos'], ['aj', 'Cierres'], ['an', 'Anulaciones']].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${F === k}">${t}<span class="n">${k === 'todos' ? all.length : all.filter(e => e.tipo === k).length}</span></button>`).join('')}</div>
+  <div class="panel"><div class="timeline">${l.slice(0, S.ui.hiLim).map(evHtml).join('') || '<div class="empty">Sin eventos</div>'}</div>${l.length > S.ui.hiLim ? '<div class="more"><button class="btn" id="himore">Ver más</button></div>' : ''}</div>`;
+  sec.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.ui.hiFiltro = b.dataset.f; render(true); });
+  const m = $('#himore', sec); if (m) m.onclick = () => { S.ui.hiLim += 200; render(true); };
+}
+
+// ================== Vista: Importar ==================
+let pend = null;
+function vImportar(sec) {
+  const imps = S.importaciones.slice().sort((a, b) => b.creado.localeCompare(a.creado));
+  sec.innerHTML = `<div><h2>Importar Excel</h2><p class="lead">Cargá el informe de existencias del sistema y los Excel de relevamiento. Cada importación queda en el historial. Si subís un relevamiento que ya tenía líneas cargadas, esas líneas se ignoran.</p></div>
+  ${!S.canWrite ? '<div class="notice warn">Tenés acceso de solo lectura: no podés importar.</div>' : ''}
+  <div class="cols2">
+    <div class="drop"><h3>Existencias del sistema</h3><p class="small muted" style="margin:0">Informe con columnas Articulo, Descripcion, Ubicacion, Cost.medio, Exist. (.xls o .xlsx). Reemplaza la foto actual del sistema y guarda qué existencias cambiaron.</p>
+      <div class="field"><label for="ifecha">Fecha y hora del informe</label><input type="datetime-local" id="ifecha"></div>
+      <input type="file" id="iex" accept=".xls,.xlsx" ${S.canWrite ? '' : 'disabled'}></div>
+    <div class="drop"><h3>Relevamiento (conteos)</h3><p class="small muted" style="margin:0">Excel con columnas ID (artículo), Codigo (impreso), Producto, Cantidad, Ubicacion y Fecha y Hora. Cada bloque "GUARDADO EL" se guarda como una sesión.</p>
+      <input type="file" id="irv" accept=".xls,.xlsx" ${S.canWrite && S.maestro.size ? '' : 'disabled'}>
+      ${!S.maestro.size ? '<span class="small muted">Primero importá las existencias.</span>' : ''}</div>
+  </div>
+  <div id="iprev"></div>
+  <div class="panel"><div class="panel-head"><h3>Importaciones anteriores</h3></div><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Archivo</th><th>Resultado</th><th>Por</th></tr></thead><tbody>
+  ${imps.map(i => `<tr><td class="mono">${esc(fF(i.creado))}</td><td>${i.tipo === 'existencias' ? 'Existencias' : 'Relevamiento'}</td><td class="small">${esc(i.archivo || '')}</td><td class="small">${i.tipo === 'existencias' ? `Informe al ${esc(fF(i.fechaDato))} · ${nf0.format(i.total)} art.${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios)} cambios`}` : `${i.nuevas} nuevas · ${i.duplicadas} repetidas · ${i.rechazadas} rechazadas`}</td><td class="small">${esc(nombre(i.user))}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Sin importaciones</td></tr>'}
+  </tbody></table></div></div>`;
+  const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); $('#ifecha', sec).value = d.toISOString().slice(0, 16);
+  $('#iex', sec).onchange = e => leerArchivo(e.target.files[0], 'ex');
+  $('#irv', sec).onchange = e => leerArchivo(e.target.files[0], 'rv');
+  if (pend) mostrarPreview();
+}
+async function leerArchivo(file, tipo) {
+  if (!file) return;
+  const box = $('#iprev'); box.innerHTML = '<div class="notice info">Leyendo archivo…</div>';
+  try {
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false });
+    const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: null });
+    if (tipo === 'ex') {
+      const r = Core.parseExistencias(aoa);
+      const fd = ($('#ifecha').value || '').replace('T', ' ') + ':00';
+      const prev = S.maestro; const nuevo = new Map(r.items.map(i => [i[0], i]));
+      const delta = [];
+      let nuevos = 0, bajas = 0, cambios = 0;
+      for (const it of r.items) { const p = prev.get(it[0]); if (!p) { nuevos++; if (prev.size) delta.push([it[0], null, it[3]]); } else if (p.x !== it[3]) { cambios++; delta.push([it[0], p.x, it[3]]); } }
+      for (const c of prev.keys()) if (!nuevo.has(c)) { bajas++; delta.push([c, prev.get(c).x, null]); }
+      pend = { tipo, archivo: file.name, r, fd, delta, nuevos, bajas, cambios, base: !prev.size, conStock: r.items.filter(i => i[3] > 0).length, valor: r.items.reduce((a, i) => a + Math.max(i[3], 0) * i[4], 0) };
+    } else {
+      const r = Core.parseRelevamiento(aoa, c => S.maestro.has(c));
+      const existentes = new Set(); S.sesiones.forEach(s => (s.lineas || []).forEach(l => existentes.add(l.k)));
+      let dup = 0; const bloques = r.bloques.map(b => ({ ...b, lineas: b.lineas.filter(l => existentes.has(l.k) ? (dup++, false) : true) })).filter(b => b.lineas.length);
+      pend = { tipo, archivo: file.name, bloques, rechazadas: r.rechazadas, dup, nuevas: bloques.reduce((a, b) => a + b.lineas.length, 0) };
+    }
+    mostrarPreview();
+  } catch (e) { pend = null; box.innerHTML = `<div class="notice bad">No pude leer el archivo: ${esc(e.message || e)}</div>`; }
+}
+function mostrarPreview() {
+  const box = $('#iprev'); if (!box || !pend) return; const p = pend;
+  if (p.tipo === 'ex') {
+    box.innerHTML = `<div class="panel"><div class="panel-head"><h3>Vista previa · ${esc(p.archivo)}</h3></div>
+    <div class="grid kpis"><div class="kpi"><span class="label">Artículos</span><span class="v">${nf0.format(p.r.items.length)}</span><span class="s">${nf0.format(p.conStock)} con existencia</span></div><div class="kpi"><span class="label">Valor a costo</span><span class="v">${f$(p.valor)}</span></div>
+    <div class="kpi info"><span class="label">Cambios vs. anterior</span><span class="v">${p.base ? 'Base' : nf0.format(p.cambios)}</span><span class="s">${p.base ? 'primera importación' : `${p.nuevos} nuevos · ${p.bajas} bajas`}</span></div></div>
+    ${p.r.duplicados.length ? `<div class="notice warn" style="margin-top:10px">El informe repite ${p.r.duplicados.length} artículo(s): ${esc(p.r.duplicados.slice(0, 10).join(', '))}. Se sumaron sus existencias.</div>` : ''}
+    <div class="toolbar" style="margin-top:12px"><span class="small">Fecha del informe: <b>${esc(fF(p.fd))}</b></span><span class="sp" style="margin-left:auto"></span><button class="btn" id="pcancel">Descartar</button><button class="btn primary" id="pok">Importar existencias</button></div><div id="pprog" class="small muted"></div></div>`;
+  } else {
+    box.innerHTML = `<div class="panel"><div class="panel-head"><h3>Vista previa · ${esc(p.archivo)}</h3></div>
+    <div class="grid kpis"><div class="kpi gold"><span class="label">Líneas nuevas</span><span class="v">${p.nuevas}</span><span class="s">en ${p.bloques.length} sesión(es)</span></div><div class="kpi"><span class="label">Ya cargadas</span><span class="v">${p.dup}</span><span class="s">se ignoran</span></div><div class="kpi bad"><span class="label">Rechazadas</span><span class="v">${p.rechazadas.length}</span></div></div>
+    ${p.rechazadas.length ? `<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Fila</th><th>ID</th><th>Producto</th><th class="n">Cant.</th><th>Motivo</th></tr></thead><tbody>${p.rechazadas.slice(0, 50).map(r => `<tr><td class="n">${r.fila}</td><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td class="n">${fN(r.q)}</td><td class="small">${esc(r.motivo)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    <div class="toolbar" style="margin-top:12px"><span class="sp" style="margin-left:auto"></span><button class="btn" id="pcancel">Descartar</button><button class="btn primary" id="pok" ${p.nuevas ? '' : 'disabled'}>Importar ${p.nuevas} líneas</button></div><div id="pprog" class="small muted"></div></div>`;
+  }
+  $('#pcancel').onclick = () => { pend = null; box.innerHTML = ''; };
+  $('#pok').onclick = async () => {
+    const b = $('#pok'); b.disabled = true; $('#pcancel').disabled = true;
+    try { p.tipo === 'ex' ? await importarExistencias(p) : await importarRelevamiento(p); pend = null; box.innerHTML = '<div class="notice ok">Importación guardada.</div>'; }
+    catch (e) { $('#pprog').textContent = ''; box.insertAdjacentHTML('beforeend', `<div class="notice bad">${esc(errMsg(e))}</div>`); b.disabled = false; $('#pcancel').disabled = false; }
+  };
+}
+const prog = t => { const el = $('#pprog'); if (el) el.textContent = t; };
+async function importarExistencias(p) {
+  const db = S.db; const snap = nuevoId('snap'); const impId = nuevoId('imp');
+  const items = p.r.items; const N = Math.ceil(items.length / Core.CHUNK_MAESTRO);
+  for (let i = 0; i < N; i++) {
+    prog(`Guardando artículos ${i + 1}/${N}…`);
+    await conReintento(() => db.doc('maestro/m' + i).set({ snap, i, items: items.slice(i * Core.CHUNK_MAESTRO, (i + 1) * Core.CHUNK_MAESTRO) }));
+  }
+  const prevN = S.meta ? S.meta.chunks : 0;
+  for (let i = N; i < prevN; i++) await conReintento(() => db.doc('maestro/m' + i).delete());
+  for (let i = 0; i * 5000 < p.delta.length; i++) {
+    prog('Guardando cambios de existencia…');
+    await conReintento(() => db.doc(`importaciones/${impId}/delta/d${i}`).set({ rows: p.delta.slice(i * 5000, (i + 1) * 5000) }));
+  }
+  await conReintento(() => db.doc('importaciones/' + impId).set({ tipo: 'existencias', creado: ahora(), user: S.uid, archivo: p.archivo, fechaDato: p.fd, snap, total: items.length, conStock: p.conStock, valor: Math.round(p.valor), nuevos: p.nuevos, bajas: p.bajas, cambios: p.cambios, base: p.base, duplicados: p.r.duplicados }));
+  await conReintento(() => db.doc('config/maestro').set({ snap, chunks: N, total: items.length, fechaDato: p.fd, archivo: p.archivo, importacion: impId, actualizado: ahora() }));
+  toast('Existencias importadas.');
+}
+async function importarRelevamiento(p) {
+  const ids = []; let n = 0;
+  for (const b of p.bloques) for (let i = 0; i < b.lineas.length; i += Core.LINEAS_POR_SESION) {
+    const id = nuevoId('xls'); ids.push(id); n++;
+    prog(`Guardando sesión ${n}…`);
+    await conReintento(() => S.db.doc('sesiones/' + id).set({ origen: 'excel', creado: b.guardado || ahora(), actualizado: ahora(), user: S.uid, responsable: '', archivo: p.archivo, guardado: b.guardado, lineas: b.lineas.slice(i, i + Core.LINEAS_POR_SESION) }));
+  }
+  await conReintento(() => S.db.doc('importaciones/' + nuevoId('imp')).set({ tipo: 'relevamiento', creado: ahora(), user: S.uid, archivo: p.archivo, nuevas: p.nuevas, duplicadas: p.dup, rechazadas: p.rechazadas.length, sesiones: ids }));
+  toast(`${p.nuevas} líneas importadas.`);
+}
+
+init();
+})();
+</script>
+</body></html>
