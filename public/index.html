@@ -34,6 +34,10 @@ header.top::after{content:"";position:absolute;right:-40px;top:0;bottom:0;width:
 .brand h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:-.01em;text-wrap:balance}
 .status{margin-left:auto;margin-right:170px;display:flex;gap:14px;flex-wrap:wrap;font-family:var(--f-mono);font-size:11px;color:var(--navy-muted)}
 .status b{color:var(--navy-ink);font-weight:500}
+.status{align-items:center}
+button.actualizar{font-family:var(--f-display);font-weight:600;font-size:12px;padding:5px 11px;border-radius:var(--r);border:1px solid var(--navy-muted);background:transparent;color:var(--navy-ink);cursor:pointer}
+button.actualizar:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
+button.actualizar:disabled{opacity:.55;cursor:wait}
 .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--navy-muted);margin-right:6px;vertical-align:1px}
 .dot.on{background:#4CC08A}.dot.warn{background:var(--gold)}
 nav.tabs{display:flex;gap:2px;overflow-x:auto;position:relative;z-index:1;scrollbar-width:none;margin-right:150px}
@@ -424,7 +428,9 @@ function renderStatus() {
   if (S.meta) extra += `<span>Sistema al <b>${esc(fF(S.meta.fechaDato))}</b></span>`;
   extra += `<span>${sinExistencias() ? 'Artículos contados' : 'Artículos'} <b>${nf0.format(S.maestro.size)}</b></span>`;
   if (!S.canWrite) extra += `<span><b>Solo lectura</b></span>`;
+  extra += `<button class="actualizar" id="hsync" ${S.sincronizando ? 'disabled' : ''}>${S.sincronizando ? 'Actualizando…' : 'Actualizar'}</button>`;
   st.innerHTML = `<span><span class="dot" id="dbdot"></span><span id="dbtxt"></span></span>` + extra;
+  $('#hsync').onclick = sincronizarAhora;
   const d = $('#dbdot'), t = $('#dbtxt');
   if (S.error.startsWith('db:')) { d.className = 'dot warn'; t.textContent = 'Base con error'; }
   else if (todoListo()) { d.className = 'dot on'; t.textContent = 'Base en línea'; }
@@ -1201,10 +1207,17 @@ function vPlanilla(sec) {
 
 // ================== Panel de la planilla ==================
 async function sincronizarAhora() {
-  S.sincronizando = true; panelPlanilla();
-  try { const r = await api('sincronizar', {}); if (r.limitado) toast('La planilla se leyó hace un momento. Esperá unos segundos.'); await refrescar(); }
-  catch (e) { toast(errMsg(e)); }
-  finally { S.sincronizando = false; panelPlanilla(); }
+  if (S.sincronizando) return;
+  S.sincronizando = true; renderStatus(); panelPlanilla();
+  try {
+    const r = await api('sincronizar', {});
+    await refrescar();
+    const l = r.lectura;
+    if (!l) toast('La planilla ya se leyó hace un momento: lo que ves está al día.');
+    else if (!l.ok) toast(l.error || 'No se pudo leer la planilla.', 5000);
+    else toast(l.nuevas || l.bajas ? `Planilla actualizada: ${l.nuevas} nuevas, ${l.bajas} quitadas.` : 'Planilla actualizada: sin cambios.');
+  } catch (e) { toast(errMsg(e)); }
+  finally { S.sincronizando = false; renderStatus(); panelPlanilla(); }
 }
 function panelPlanilla() {
   const el = $('#ppan'); if (!el) return;

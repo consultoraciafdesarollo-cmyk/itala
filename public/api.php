@@ -49,8 +49,8 @@ function sincronizarAhora(): array
     if (time() - (int) Datos::leer('planilla_intento', 0) < PAUSA_SINCRONIZAR) {
         return ['ok' => true, 'limitado' => true];
     }
-    Planilla::sincronizar();
-    return ['ok' => true];
+    $r = Planilla::sincronizar();
+    return ['ok' => true, 'lectura' => array_intersect_key($r, array_flip(['ok', 'error', 'nuevas', 'bajas']))];
 }
 
 try {
