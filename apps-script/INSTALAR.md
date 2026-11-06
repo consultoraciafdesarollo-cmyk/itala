@@ -27,4 +27,4 @@ Hay que publicar la versión nueva, o sigue corriendo la anterior: **Implementar
 
 ## Cómo saber que anda
 
-Entrá a la app, pestaña **Importar**. En el panel de la planilla tiene que decir que todo lo cargado ya está en la planilla. Si hay un error, aparece ahí mismo, y los conteos siguen guardados y se reintentan solos.
+Entrá a la app, pestaña **Planilla**. En el panel de la planilla tiene que decir que todo lo cargado ya está en la planilla. Si hay un error, aparece ahí mismo, y los conteos siguen guardados y se reintentan solos.

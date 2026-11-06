@@ -6,6 +6,7 @@ declare(strict_types=1);
  *
  * Lectura: baja el .xlsx completo y copia a la base los conteos de todas las pestañas con
  * encabezados ID y Codigo, menos App Conteos (la escribe esta app; leerla contaría doble).
+ * Una pestaña con encabezado Articulo, si existe, es el informe de existencias.
  * No usar el endpoint gviz: infiere tipos por columna y pierde filas (0100B77288001, por ejemplo).
  *
  * Escritura: los conteos cargados en la app salen por la cola salida_planilla hacia el
@@ -14,6 +15,12 @@ declare(strict_types=1);
 final class Planilla
 {
     private const HOJA_APP = 'App Conteos';
+
+    /**
+     * Los artículos son 3/100178223, y en el sistema algunos tienen un espacio: 3/ 100254805.
+     * Sheets convierte otros en fecha: 3/07 llega como 46206.
+     */
+    public const FORMATO_ARTICULO = '#^\d+/\s*\S#';
 
     public static function sincronizar(): array
     {
@@ -64,16 +71,16 @@ final class Planilla
     public static function aplicar(array $hojas): array
     {
         return tx(function (PDO $pdo) use ($hojas) {
+            $hoy = ahora();
+            $existencias = self::aplicarExistencias($pdo, $hojas, $hoy);
             $articulos = array_flip($pdo->query('SELECT c FROM articulos')->fetchAll(PDO::FETCH_COLUMN));
-            if (!$articulos) {
-                throw new RuntimeException('Importá primero las existencias del sistema.');
-            }
             $previas = [];
             foreach ($pdo->query("SELECT l.k, l.eliminada FROM lineas l JOIN sesiones s ON s.id = l.sesion_id WHERE s.origen = 'planilla'") as $f) {
                 $previas[$f['k']] = (int) $f['eliminada'];
             }
-            // Una línea ya copiada sigue valiendo aunque su artículo salga del maestro.
-            $existe = fn (string $c, string $k) => isset($articulos[$c]) || isset($previas[$k]);
+            // Sin existencias no hay contra qué validar. Una línea ya copiada sigue valiendo
+            // aunque su artículo salga del maestro.
+            $existe = fn (string $c, string $k) => !$articulos || isset($articulos[$c]) || isset($previas[$k]);
 
             $apariciones = [];
             $vistas = [];
@@ -82,7 +89,6 @@ final class Planilla
             $altaSesion = $pdo->prepare("INSERT OR IGNORE INTO sesiones (id, origen, creado, actualizado, user, responsable, archivo, guardado) VALUES (?, 'planilla', ?, ?, '', '', ?, ?)");
             $altaLinea = $pdo->prepare('INSERT INTO lineas (k, sesion_id, c, datos) VALUES (?, ?, ?, ?)');
             $reactivar = $pdo->prepare('UPDATE lineas SET eliminada = 0 WHERE k = ?');
-            $hoy = ahora();
             $nuevas = 0;
 
             foreach ($hojas as $hoja) {
@@ -136,6 +142,7 @@ final class Planilla
                 'ok' => true, 'error' => null, 'ultima' => $hoy, 'intento' => $hoy, 'pestanas' => $pestanas,
                 'lineas' => count($vistas), 'nuevas' => $nuevas, 'bajas' => $bajas,
                 'rechazadas' => array_slice($rechazadas, 0, 200), 'totalRechazadas' => count($rechazadas),
+                'existencias' => $existencias,
             ];
             Datos::guardar('planilla', $estado);
             if ($nuevas || $bajas) {
@@ -149,6 +156,76 @@ final class Planilla
             }
             return $estado;
         });
+    }
+
+    /**
+     * Si una pestaña tiene encabezado Articulo, la toma como informe de existencias.
+     * Sin esa pestaña conserva el último maestro: un error en la planilla no borra nada.
+     */
+    private static function aplicarExistencias(PDO $pdo, array $hojas, string $hoy): ?array
+    {
+        foreach ($hojas as $hoja) {
+            $r = self::parsearExistencias($hoja['filas']);
+            if ($r === null || !$r['items']) {
+                continue;
+            }
+            $items = array_values($r['items']);
+            $resumen = ['nombre' => $hoja['nombre'], 'total' => count($items)];
+            $huella = sha1(aJson($items));
+            if ((Datos::leer('maestro')['huella'] ?? '') === $huella) {
+                return $resumen; // sin cambios: no reescribir miles de filas en cada lectura
+            }
+
+            $previo = [];
+            foreach ($pdo->query('SELECT c, x FROM articulos') as $f) {
+                $previo[$f['c']] = (float) $f['x'];
+            }
+            $base = !$previo;
+            $impId = 'imp-exist-' . bin2hex(random_bytes(6));
+            $cambio = $pdo->prepare('INSERT INTO importacion_cambios (imp_id, c, antes, despues) VALUES (?, ?, ?, ?)');
+            $nuevos = 0;
+            $cambios = 0;
+            $conStock = 0;
+            $valor = 0.0;
+            $pdo->exec('DELETE FROM articulos');
+            $alta = $pdo->prepare('INSERT INTO articulos (c, d, u, x, co, p, cl) VALUES (?, ?, ?, ?, ?, ?, ?)');
+            foreach ($items as $it) {
+                $alta->execute($it);
+                [$c, , , $x, $co] = $it;
+                $conStock += $x > 0 ? 1 : 0;
+                $valor += max($x, 0) * (float) $co;
+                if (!array_key_exists($c, $previo)) {
+                    $nuevos++;
+                    if (!$base) {
+                        $cambio->execute([$impId, $c, null, $x]);
+                    }
+                } elseif ($previo[$c] !== $x) {
+                    $cambios++;
+                    $cambio->execute([$impId, $c, $previo[$c], $x]);
+                }
+            }
+            $bajas = 0;
+            foreach (array_diff_key($previo, $r['items']) as $c => $x) {
+                $bajas++;
+                $cambio->execute([$impId, $c, $x, null]);
+            }
+
+            $snap = 'hoja-' . substr($huella, 0, 16);
+            $doc = [
+                'tipo' => 'existencias', 'creado' => $hoy, 'user' => '', 'archivo' => $hoja['nombre'], 'fechaDato' => $hoy,
+                'snap' => $snap, 'total' => count($items), 'conStock' => $conStock, 'valor' => round($valor),
+                'nuevos' => $nuevos, 'bajas' => $bajas, 'cambios' => $cambios, 'base' => $base, 'duplicados' => $r['duplicados'],
+            ];
+            $pdo->prepare('INSERT INTO importaciones (id, tipo, creado, datos) VALUES (?, ?, ?, ?)')
+                ->execute([$impId, 'existencias', $hoy, aJson($doc)]);
+            Datos::guardar('maestro', [
+                'snap' => $snap, 'huella' => $huella, 'total' => count($items), 'fechaDato' => $hoy,
+                'archivo' => $hoja['nombre'], 'importacion' => $impId, 'actualizado' => $hoy,
+            ]);
+            Datos::tocar();
+            return $resumen;
+        }
+        return null;
     }
 
     private static function lineasEnCierres(PDO $pdo): array
@@ -260,6 +337,71 @@ final class Planilla
 
     // ---------- Interpretación de una pestaña ----------
 
+    /**
+     * Lee un informe de existencias, con las columnas del informe del sistema. Costo y precio
+     * son opcionales: sin ellas, la app funciona sin valores en pesos.
+     *
+     * @return array{items: array<string, array>, duplicados: array}|null  null si no es un informe.
+     */
+    public static function parsearExistencias(array $filas): ?array
+    {
+        $inicio = null;
+        $encabezado = [];
+        foreach ($filas as $n => $f) {
+            if (preg_match('/^art[ií]culo$/u', mb_strtolower(self::texto($f[0] ?? null)))) {
+                $inicio = $n;
+                $encabezado = array_map(fn ($v) => mb_strtolower(self::texto($v)), $f);
+                break;
+            }
+        }
+        if ($inicio === null) {
+            return null;
+        }
+        $col = function (string $re) use ($encabezado): ?int {
+            foreach ($encabezado as $i => $t) {
+                if (preg_match($re, $t)) {
+                    return $i;
+                }
+            }
+            return null;
+        };
+        $iE = $col('/^exist/');
+        if ($iE === null) {
+            return null;
+        }
+        $iD = $col('/^descrip/');
+        $iU = $col('/^ubic/');
+        $iC = $col('/^clase/');
+        $iP = $col('/^p\.?v\.?p\.?$/');
+        $iCo = $col('/^cost.*medio/');
+        $celda = fn (array $f, ?int $i) => $i === null ? null : ($f[$i] ?? null);
+
+        $items = [];
+        $duplicados = [];
+        foreach ($filas as $n => $f) {
+            if ($n <= $inicio) {
+                continue;
+            }
+            $c = mb_strtoupper(self::texto($f[0] ?? null));
+            if ($c === '' || str_starts_with($c, '***')) {
+                continue;
+            }
+            $x = self::numero($celda($f, $iE));
+            if (isset($items[$c])) {
+                $duplicados[] = $c;
+                $items[$c][3] += $x;
+                continue;
+            }
+            $items[$c] = [
+                $c, self::texto($celda($f, $iD)), self::texto($celda($f, $iU)), $x,
+                $iCo === null ? null : self::numero($celda($f, $iCo)),
+                $iP === null ? null : self::numero($celda($f, $iP)),
+                self::texto($celda($f, $iC)),
+            ];
+        }
+        return ['items' => $items, 'duplicados' => array_slice($duplicados, 0, 500)];
+    }
+
     /** @return array{bloques: array, rechazadas: array, total: int}|null  null si no tiene los encabezados. */
     public static function parsearHoja(string $nombre, array $filas, callable $existe, array &$apariciones): ?array
     {
@@ -328,6 +470,8 @@ final class Planilla
             $motivo = null;
             if ($l['c'] === '') {
                 $motivo = 'Sin código de artículo';
+            } elseif (!preg_match(self::FORMATO_ARTICULO, $l['c'])) {
+                $motivo = 'Código con formato inválido';
             } elseif (!$existe($l['c'], $l['k'])) {
                 $motivo = 'El artículo no existe en el sistema';
             } elseif ($l['q'] <= 0) {

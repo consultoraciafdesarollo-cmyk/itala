@@ -8,7 +8,6 @@ require __DIR__ . '/../src/bootstrap.php';
 $pasos = [
     1 => [
         'CREATE TABLE IF NOT EXISTS articulos (c TEXT PRIMARY KEY, d TEXT, u TEXT, x REAL, co REAL, p REAL, cl TEXT)',
-        'CREATE TABLE IF NOT EXISTS articulos_carga (snap TEXT, c TEXT, d TEXT, u TEXT, x REAL, co REAL, p REAL, cl TEXT, PRIMARY KEY (snap, c))',
         'CREATE TABLE IF NOT EXISTS importaciones (id TEXT PRIMARY KEY, tipo TEXT, creado TEXT, datos TEXT)',
         'CREATE TABLE IF NOT EXISTS importacion_cambios (imp_id TEXT, c TEXT, antes REAL, despues REAL)',
         'CREATE INDEX IF NOT EXISTS ix_cambios_imp ON importacion_cambios (imp_id)',
@@ -20,6 +19,9 @@ $pasos = [
         'CREATE TABLE IF NOT EXISTS salida_planilla (id INTEGER PRIMARY KEY AUTOINCREMENT, tipo TEXT, k TEXT, payload TEXT, creado TEXT, intentos INTEGER NOT NULL DEFAULT 0, ultimo_error TEXT, enviado_el TEXT)',
         'CREATE INDEX IF NOT EXISTS ix_salida_pendiente ON salida_planilla (enviado_el)',
         'CREATE TABLE IF NOT EXISTS sync_estado (clave TEXT PRIMARY KEY, valor TEXT)',
+    ],
+    2 => [
+        'DROP TABLE IF EXISTS articulos_carga', // el maestro ya no se carga desde la web
     ],
 ];
 

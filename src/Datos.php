@@ -106,78 +106,6 @@ final class Datos
 
     // ---------- Existencias ----------
 
-    public static function maestroChunk(array $b): array
-    {
-        $snap = self::id($b['snap'] ?? null);
-        $i = (int) ($b['i'] ?? -1);
-        $items = $b['items'] ?? null;
-        if ($i < 0 || !is_array($items) || count($items) > 3000) {
-            throw new DatoInvalido('invalid_argument');
-        }
-        tx(function (PDO $pdo) use ($snap, $i, $items) {
-            if ($i === 0) {
-                $pdo->prepare('DELETE FROM articulos_carga WHERE snap <> ?')->execute([$snap]);
-            }
-            $st = $pdo->prepare('INSERT OR REPLACE INTO articulos_carga (snap, c, d, u, x, co, p, cl) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-            foreach ($items as $it) {
-                if (!is_array($it) || count($it) !== 7) {
-                    throw new DatoInvalido('invalid_argument');
-                }
-                $st->execute([
-                    $snap, self::texto($it[0], 60, true), self::texto($it[1], 200), self::texto($it[2], 60),
-                    self::numero($it[3]), self::numero($it[4]), self::numero($it[5]), self::texto($it[6], 20),
-                ]);
-            }
-        });
-        return ['ok' => true];
-    }
-
-    public static function maestroFin(array $b): array
-    {
-        $snap = self::id($b['snap'] ?? null);
-        $impId = self::id($b['impId'] ?? null);
-        $total = (int) ($b['total'] ?? 0);
-        $delta = $b['delta'] ?? [];
-        if (!is_array($delta)) {
-            throw new DatoInvalido('invalid_argument');
-        }
-        return tx(function (PDO $pdo) use ($b, $snap, $impId, $total, $delta) {
-            if ((self::leer('maestro')['snap'] ?? '') === $snap) {
-                return ['ok' => true]; // reintento de una importación que ya entró
-            }
-            $st = $pdo->prepare('SELECT COUNT(*) FROM articulos_carga WHERE snap = ?');
-            $st->execute([$snap]);
-            if ($total < 1 || (int) $st->fetchColumn() !== $total) {
-                throw new DatoInvalido('importacion_incompleta');
-            }
-            $pdo->exec('DELETE FROM articulos');
-            $pdo->prepare('INSERT INTO articulos (c, d, u, x, co, p, cl) SELECT c, d, u, x, co, p, cl FROM articulos_carga WHERE snap = ?')->execute([$snap]);
-            $pdo->exec('DELETE FROM articulos_carga');
-            $st = $pdo->prepare('INSERT INTO importacion_cambios (imp_id, c, antes, despues) VALUES (?, ?, ?, ?)');
-            foreach ($delta as $r) {
-                $st->execute([$impId, self::texto($r[0] ?? '', 60, true), $r[1] ?? null, $r[2] ?? null]);
-            }
-            $creado = ahora();
-            $archivo = self::texto($b['archivo'] ?? '', 200);
-            $fecha = self::texto($b['fechaDato'] ?? '', 25);
-            $doc = [
-                'tipo' => 'existencias', 'creado' => $creado, 'user' => self::texto($b['user'] ?? '', 80),
-                'archivo' => $archivo, 'fechaDato' => $fecha, 'snap' => $snap, 'total' => $total,
-                'conStock' => (int) ($b['conStock'] ?? 0), 'valor' => self::numero($b['valor'] ?? 0),
-                'nuevos' => (int) ($b['nuevos'] ?? 0), 'bajas' => (int) ($b['bajas'] ?? 0), 'cambios' => (int) ($b['cambios'] ?? 0),
-                'base' => !empty($b['base']), 'duplicados' => array_slice((array) ($b['duplicados'] ?? []), 0, 500),
-            ];
-            $pdo->prepare('INSERT INTO importaciones (id, tipo, creado, datos) VALUES (?, ?, ?, ?)')
-                ->execute([$impId, 'existencias', $creado, aJson($doc)]);
-            self::guardar('maestro', [
-                'snap' => $snap, 'total' => $total, 'fechaDato' => $fecha, 'archivo' => $archivo,
-                'importacion' => $impId, 'actualizado' => $creado,
-            ]);
-            self::tocar();
-            return ['ok' => true];
-        });
-    }
-
     public static function guardarFoto0(array $b): array
     {
         $id = self::id($b['id'] ?? null);
@@ -223,6 +151,9 @@ final class Datos
             'u' => self::texto($l['u'] ?? '', 40, true), 't' => self::fecha($l['t'] ?? ''), 'r' => self::texto($l['r'] ?? '', 80),
             'et' => !empty($l['et']),
         ];
+        if (!preg_match(Planilla::FORMATO_ARTICULO, $linea['c'])) {
+            throw new DatoInvalido('invalid_argument');
+        }
         $user = self::texto($s['user'] ?? '', 80);
         $resp = self::texto($s['responsable'] ?? '', 80);
         tx(function (PDO $pdo) use ($sid, $k, $linea, $user, $resp) {

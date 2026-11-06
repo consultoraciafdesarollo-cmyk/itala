@@ -78,8 +78,6 @@ try {
         fallar('metodo_no_admitido', 405);
     }
     $acciones = [
-        'maestro_chunk' => [Datos::class, 'maestroChunk'],
-        'maestro_fin' => [Datos::class, 'maestroFin'],
         'foto0' => [Datos::class, 'guardarFoto0'],
         'linea' => [Datos::class, 'linea'],
         'linea_marca' => [Datos::class, 'lineaMarca'],
