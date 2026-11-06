@@ -1,6 +1,5 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Relevamiento Repuestos ITALA</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Open+Sans:wght@400;600&family=JetBrains+Mono:wght@500&display=swap">
 <style>
@@ -183,17 +182,6 @@ const Core = (() => {
   const CHUNK_MAESTRO = 2500;
   const LINEAS_POR_SESION = 900;
 
-  function hash(str) {
-    let h1 = 0xdeadbeef ^ 0, h2 = 0x41c6ce57 ^ 0;
-    for (let i = 0; i < str.length; i++) {
-      const ch = str.charCodeAt(i);
-      h1 = Math.imul(h1 ^ ch, 2654435761);
-      h2 = Math.imul(h2 ^ ch, 1597334677);
-    }
-    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
-  }
   const s = v => (v === null || v === undefined) ? '' : String(v).trim();
   const num = v => {
     if (typeof v === 'number') return v;
@@ -201,26 +189,6 @@ const Core = (() => {
     if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
     const n = parseFloat(t); return isNaN(n) ? 0 : n;
   };
-  const pad = n => String(n).padStart(2, '0');
-  function fmtFecha(v) {
-    if (typeof v === 'number' && v > 20000 && v < 80000) {
-      const ms = Math.round((v - 25569) * 86400) * 1000; const d = new Date(ms);
-      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
-    }
-    if (v instanceof Date && !isNaN(v)) {
-      return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())} ${pad(v.getHours())}:${pad(v.getMinutes())}:${pad(v.getSeconds())}`;
-    }
-    const t = s(v);
-    let m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
-    if (m) return `${m[3]}-${pad(m[2])}-${pad(m[1])} ${pad(m[4] || 0)}:${m[5] || '00'}:${m[6] || '00'}`;
-    m = t.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
-    if (m) return `${m[1]}-${m[2]}-${m[3]} ${m[4] || '00'}:${m[5] || '00'}:${m[6] || '00'}`;
-    return t;
-  }
-  function codBarra(v) {
-    if (typeof v === 'number') return Number.isInteger(v) ? String(v) : String(v);
-    return s(v).replace(/\s+/g, '');
-  }
   const normCod = v => s(v).toUpperCase();
 
   // ---------- Existencias del sistema ----------
@@ -245,40 +213,6 @@ const Core = (() => {
       vistos.set(cod, items.length); items.push(it);
     }
     return { items, duplicados };
-  }
-
-  // ---------- Relevamiento (Excel de conteos) ----------
-  function parseRelevamiento(aoa, existe) {
-    let h = aoa.findIndex(r => r && r.some(x => s(x).toLowerCase() === 'id') && r.some(x => /^c[oó]digo$/i.test(s(x))));
-    if (h < 0) throw new Error('No encontré los encabezados "ID" y "Codigo" en el relevamiento.');
-    const head = aoa[h].map(x => s(x).toLowerCase());
-    const col = re => head.findIndex(x => re.test(x));
-    const iId = col(/^id$/), iB = col(/^c[oó]digo$/), iD = col(/^producto|^descrip/), iQ = col(/^cant/),
-      iE = col(/^estado/), iU = col(/^ubic/), iF = col(/^fecha/);
-    const bloques = []; let actual = { guardado: '', lineas: [] }; bloques.push(actual);
-    const rechazadas = [];
-    for (let r = h + 1; r < aoa.length; r++) {
-      const row = aoa[r]; if (!row) continue;
-      const c0 = s(row[iId]);
-      const g = c0.match(/GUARDADO EL:\s*(.+)$/i);
-      if (g) { actual = { guardado: fmtFecha(g[1]), lineas: [] }; bloques.push(actual); continue; }
-      if (!row.some(x => s(x) !== '')) continue;
-      const linea = {
-        c: normCod(row[iId]),
-        b: iB >= 0 ? codBarra(row[iB]) : '',
-        d: iD >= 0 ? s(row[iD]) : '',
-        q: iQ >= 0 ? num(row[iQ]) : 0,
-        e: iE >= 0 ? s(row[iE]) : '',
-        u: iU >= 0 ? s(row[iU]).toUpperCase() : '',
-        t: iF >= 0 ? fmtFecha(row[iF]) : '',
-        r: ''
-      };
-      linea.k = 'x' + hash([linea.c, linea.b, linea.q, linea.u, linea.t].join('|'));
-      if (!linea.c || !existe(linea.c)) { rechazadas.push({ fila: r + 1, ...linea, motivo: !linea.c ? 'Sin código de artículo' : 'El artículo no existe en el sistema' }); continue; }
-      if (!(linea.q > 0)) { rechazadas.push({ fila: r + 1, ...linea, motivo: 'Cantidad vacía o cero' }); continue; }
-      actual.lineas.push(linea);
-    }
-    return { bloques: bloques.filter(b => b.lineas.length), rechazadas };
   }
 
   // ---------- Consolidado ----------
@@ -372,7 +306,7 @@ const Core = (() => {
   }
   const numeroArticulo = c => (c.split('/').pop() || '').replace(/[^0-9A-Z]/gi, '');
 
-  return { CHUNK_MAESTRO, LINEAS_POR_SESION, hash, fmtFecha, normCod, parseExistencias, parseRelevamiento, consolidar, equivalencias, numeroArticulo };
+  return { CHUNK_MAESTRO, LINEAS_POR_SESION, normCod, parseExistencias, consolidar, equivalencias, numeroArticulo };
 })();
 if (typeof module !== 'undefined') module.exports = Core;
 
@@ -382,10 +316,10 @@ if (typeof module !== 'undefined') module.exports = Core;
 'use strict';
 // ================== Estado ==================
 const S = {
-  db: null, user: null, uid: '', canWrite: true, ready: { meta: false, maestro: false, sesiones: false, ajustes: false, importaciones: false, foto0meta: false, foto0: false },
-  meta: null, chunks: new Map(), maestro: new Map(), maestroSnap: null,
-  sesiones: [], ajustes: [], importaciones: [], foto0Meta: null, foto0Chunks: new Map(), foto0: new Map(), foto0Snap: null, cons: null, filas: [], porCod: new Map(), equiv: new Map(),
-  names: {}, view: 'resumen', ui: { itFiltro: 'stock', itQ: '', itLim: 200, itSort: 'auto', ajSel: new Set(), ajQ: '', ajSoloDif: false, eqFiltro: 'todas', eqQ: '', hiFiltro: 'todos', hiLim: 80, f0Filtro: 'aj', f0Q: '', f0Lim: 300 },
+  uid: '', canWrite: true, listo: false, version: -1,
+  meta: null, maestro: new Map(), maestroSnap: null, planilla: null, cola: null,
+  sesiones: [], ajustes: [], importaciones: [], foto0Meta: null, foto0: new Map(), foto0Snap: null, cons: null, filas: [], porCod: new Map(), equiv: new Map(),
+  view: 'resumen', ui: { itFiltro: 'stock', itQ: '', itLim: 200, itSort: 'auto', ajSel: new Set(), ajQ: '', ajSoloDif: false, eqFiltro: 'todas', eqQ: '', hiFiltro: 'todos', hiLim: 80, f0Filtro: 'aj', f0Q: '', f0Lim: 300 },
   carga: { item: null, bar: '', cands: [], q: '' }, timer: null, error: ''
 };
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -407,10 +341,17 @@ function toast(msg, ms = 2600) {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
   setTimeout(() => t.remove(), ms);
 }
-const nombre = uid => uid ? (S.names[uid] || '…') : '—';
-async function resolverNombres(ids) {
-  if (!S.user) return; const falt = [...new Set(ids)].filter(i => i && !(i in S.names)); if (!falt.length) return;
-  try { const ps = await S.user.profiles(falt); falt.forEach(i => S.names[i] = (ps[i] && ps[i].name) || 'Usuario'); scheduleRender(); } catch (e) { }
+// Sin login: la autoría es el nombre que cada persona escribe en Responsable.
+const nombre = uid => uid || '—';
+
+// ================== API ==================
+async function api(accion, cuerpo, extra = '') {
+  const op = cuerpo === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) };
+  let r;
+  try { r = await fetch('api.php?accion=' + accion + extra, op); } catch (e) { throw { code: 'unavailable' }; }
+  let j = null; try { j = await r.json(); } catch (e) { }
+  if (!r.ok || !j) throw { code: (j && j.error) || 'unavailable' };
+  return j;
 }
 
 // ================== Escrituras serializadas por documento ==================
@@ -428,37 +369,27 @@ async function conReintento(fn) {
 }
 function errMsg(e) {
   const c = e && e.code;
-  if (c === 'quota_exceeded') return 'La base llegó a su límite de espacio. Avisale a Raul para depurar historial antiguo.';
-  if (c === 'invalid_argument') return 'No tenés permiso para guardar cambios en esta app, o el dato es inválido.';
-  if (c === 'resource_exhausted') return 'Demasiadas operaciones seguidas. Esperá unos segundos y probá de nuevo.';
+  if (c === 'invalid_argument') return 'El servidor rechazó el dato porque no es válido.';
+  if (c === 'importacion_incompleta') return 'La importación llegó incompleta y no se aplicó. Probá de nuevo.';
+  if (c === 'demasiado_grande') return 'El envío es demasiado grande.';
   return 'No se pudo guardar (' + (c || 'error') + '). Revisá la conexión y probá de nuevo.';
 }
 
 // ================== Derivados ==================
-function rebuildMaestro() {
-  const m = S.meta; if (!m) { S.maestro = new Map(); S.maestroSnap = null; return; }
-  const parts = []; for (let i = 0; i < m.chunks; i++) { const c = S.chunks.get('m' + i); if (!c || c.snap !== m.snap) return; parts.push(c); }
-  if (S.maestroSnap === m.snap) return;
-  const map = new Map();
-  for (const c of parts) for (const it of c.items) map.set(it[0], { c: it[0], d: it[1], u: it[2], x: it[3], co: it[4], p: it[5], cl: it[6] });
-  S.maestro = map; S.maestroSnap = m.snap;
+async function cargarMaestro() {
+  const r = await api('maestro');
+  S.maestro = new Map(r.items.map(it => [it[0], { c: it[0], d: it[1], u: it[2], x: it[3], co: it[4], p: it[5], cl: it[6] }]));
+  S.maestroSnap = r.snap;
 }
-function rebuildFoto0() {
-  const m = S.foto0Meta; if (!m) { S.foto0 = new Map(); S.foto0Snap = null; return; }
-  if (S.foto0Snap === m.id) return;
-  const parts = []; for (let i = 0; i < m.chunks; i++) { const c = S.foto0Chunks.get(m.id + '-f' + i); if (!c) return; parts.push(c); }
-  const map = new Map();
-  for (const c of parts) for (const it of c.items) map.set(it[0], { c: it[0], x: it[1], co: it[2], d: it[3] });
-  S.foto0 = map; S.foto0Snap = m.id;
+async function cargarFoto0() {
+  const r = await api('foto0');
+  S.foto0 = new Map(r.items.map(it => [it[0], { c: it[0], x: it[1], co: it[2], d: it[3] }]));
+  S.foto0Snap = r.id;
 }
 function recompute() {
-  rebuildMaestro(); rebuildFoto0();
   S.cons = Core.consolidar(S.maestro, S.sesiones, S.ajustes);
   S.filas = S.cons.filas; S.porCod = new Map(S.filas.map(f => [f.c, f]));
   S.equiv = Core.equivalencias(S.sesiones);
-  const ids = []; S.sesiones.forEach(s => { ids.push(s.user); (s.lineas || []).forEach(l => l.xu && ids.push(l.xu)); });
-  S.ajustes.forEach(a => { ids.push(a.user); ids.push(a.anuladoPor); ids.push(a.cargadoPor); }); if (S.foto0Meta) ids.push(S.foto0Meta.user); S.importaciones.forEach(i => ids.push(i.user));
-  resolverNombres(ids.filter(Boolean));
 }
 let rq = 0;
 function scheduleRender() { if (rq) return; rq = requestAnimationFrame(() => { rq = 0; render(); }); }
@@ -470,26 +401,37 @@ async function init() {
   window.addEventListener('hashchange', () => { S.view = vistaDeHash(); render(true); });
   S.view = vistaDeHash();
   S.timer = setTimeout(() => { if (!todoListo()) { S.error = 'lento'; render(); } }, 10000);
-  const cl = window.claude;
-  if (!cl || !cl.use) { S.error = 'sin-db'; render(); return; }
-  const [db, user] = await Promise.all([cl.use('db'), cl.use('user')]);
-  S.db = db; S.user = user;
-  if (!db) { S.error = 'sin-db'; render(); return; }
-  if (user) {
-    try { S.uid = (await user.id()) || ''; } catch (e) { }
-    try { const w = await user.can('data.write'); S.canWrite = w !== false; } catch (e) { }
-  }
-  const onErr = e => { S.error = 'db:' + (e && e.code); render(); };
-  db.doc('config/maestro').onSnapshot(sn => { S.meta = sn.exists ? sn.data() : null; S.ready.meta = !sn.metadata.fromCache || S.ready.meta; changed(); }, onErr);
-  db.collection('maestro').onSnapshot(q => { S.chunks = new Map(q.docs.map(d => [d.id, d.data()])); S.ready.maestro = !q.metadata.fromCache || S.ready.maestro; changed(); }, onErr);
-  db.collection('sesiones').onSnapshot(q => { S.sesiones = q.docs.map(d => ({ id: d.id, ...d.data() })); S.ready.sesiones = !q.metadata.fromCache || S.ready.sesiones; changed(); }, onErr);
-  db.collection('ajustes').onSnapshot(q => { S.ajustes = q.docs.map(d => ({ id: d.id, ...d.data() })); S.ready.ajustes = !q.metadata.fromCache || S.ready.ajustes; changed(); }, onErr);
-  db.collection('importaciones').onSnapshot(q => { S.importaciones = q.docs.map(d => ({ id: d.id, ...d.data() })); S.ready.importaciones = !q.metadata.fromCache || S.ready.importaciones; changed(); }, onErr);
-  db.doc('config/foto0').onSnapshot(sn => { S.foto0Meta = sn.exists ? sn.data() : null; S.ready.foto0meta = !sn.metadata.fromCache || S.ready.foto0meta; changed(); }, onErr);
-  db.collection('foto0').onSnapshot(q => { S.foto0Chunks = new Map(q.docs.map(d => [d.id, d.data()])); S.ready.foto0 = !q.metadata.fromCache || S.ready.foto0; changed(); }, onErr);
+  S.uid = LS.get('responsable') || '';
+  setInterval(() => { if (!document.hidden) refrescar(); }, 20000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) refrescar(); });
+  await refrescar();
 }
-const todoListo = () => Object.values(S.ready).every(Boolean);
-const VISTAS = [['resumen', 'Resumen'], ['items', 'Ítems'], ['cargar', 'Cargar conteo'], ['ajustes', 'Cierres y ajustes'], ['foto0', 'Foto 0'], ['equivalencias', 'Códigos impresos'], ['historial', 'Historial'], ['importar', 'Importar Excel']];
+let refrescando = false, otraVez = false;
+async function refrescar() {
+  if (refrescando) { otraVez = true; return; }
+  refrescando = true;
+  try {
+    const e = await api('estado', undefined, '&v=' + S.version);
+    S.planilla = e.planilla; S.cola = e.cola;
+    if (!e.sinCambios) {
+      S.meta = e.meta; S.sesiones = e.sesiones; S.ajustes = e.ajustes; S.importaciones = e.importaciones; S.foto0Meta = e.foto0Meta;
+      const snap = S.meta ? S.meta.snap : null;
+      if (snap !== S.maestroSnap) await cargarMaestro();
+      const f0 = S.foto0Meta ? S.foto0Meta.id : null;
+      if (f0 !== S.foto0Snap) await cargarFoto0();
+      S.version = e.version; S.listo = true; S.error = ''; changed();
+    } else if (S.error) { S.error = ''; scheduleRender(); }
+    panelPlanilla();
+  } catch (err) {
+    clearTimeout(S.timer); S.timer = null;
+    S.error = 'db:' + ((err && err.code) || 'error'); render();
+  } finally {
+    refrescando = false;
+    if (otraVez) { otraVez = false; refrescar(); }
+  }
+}
+const todoListo = () => S.listo;
+const VISTAS = [['resumen', 'Resumen'], ['items', 'Ítems'], ['cargar', 'Cargar conteo'], ['ajustes', 'Cierres y ajustes'], ['foto0', 'Foto 0'], ['equivalencias', 'Códigos impresos'], ['historial', 'Historial'], ['importar', 'Importar']];
 function vistaDeHash() { const h = location.hash.slice(1); return VISTAS.some(v => v[0] === h) ? h : 'resumen'; }
 
 // ================== Render general ==================
@@ -502,8 +444,7 @@ function renderStatus() {
   if (!S.canWrite) extra += `<span><b>Solo lectura</b></span>`;
   st.innerHTML = `<span><span class="dot" id="dbdot"></span><span id="dbtxt"></span></span>` + extra;
   const d = $('#dbdot'), t = $('#dbtxt');
-  if (S.error === 'sin-db') { d.className = 'dot'; t.textContent = 'Sin base de datos'; }
-  else if (S.error.startsWith('db:')) { d.className = 'dot warn'; t.textContent = 'Base con error'; }
+  if (S.error.startsWith('db:')) { d.className = 'dot warn'; t.textContent = 'Base con error'; }
   else if (todoListo()) { d.className = 'dot on'; t.textContent = 'Base en línea'; }
   else if (S.error === 'lento') { d.className = 'dot warn'; t.textContent = 'Base sin respuesta'; }
   else { d.className = 'dot'; t.textContent = 'Conectando…'; }
@@ -518,8 +459,7 @@ function render(force) {
   renderStatus(); renderTabs();
   if (S.timer && todoListo()) { clearTimeout(S.timer); S.timer = null; if (S.error === 'lento') S.error = ''; }
   const main = $('#main');
-  if (S.error === 'sin-db') { main.innerHTML = `<div class="notice bad">La base de datos de la app no está disponible en esta vista. Abrí el link desde claude.ai con tu cuenta para ver y cargar el relevamiento.</div>`; return; }
-  if (!todoListo() && !S.meta && !S.sesiones.length) { main.innerHTML = `<div class="empty">${S.error === 'lento' ? 'La base todavía no responde. Revisá la conexión; la app sigue intentando.' : 'Cargando la base de relevamiento…'}</div>`; return; }
+  if (!todoListo()) { main.innerHTML = `<div class="empty">${S.error ? 'La base todavía no responde. Revisá la conexión; la app sigue intentando.' : 'Cargando la base de relevamiento…'}</div>`; return; }
   // no re-renderizar la vista de carga mientras se tipea: solo partes
   if (S.view === 'cargar' && lastView === 'cargar' && !force) { refreshCarga(); return; }
   const keepScroll = lastView === S.view ? window.scrollY : 0;
@@ -527,8 +467,8 @@ function render(force) {
   const fn = { resumen: vResumen, items: vItems, cargar: vCargar, ajustes: vAjustes, foto0: vFoto0, equivalencias: vEquiv, historial: vHistorial, importar: vImportar }[S.view];
   main.innerHTML = '';
   const sec = document.createElement('section'); sec.className = 'view'; main.appendChild(sec);
-  if (S.error.startsWith('db:')) sec.insertAdjacentHTML('beforeend', `<div class="notice bad">La conexión con la base falló (${esc(S.error.slice(3))}). Recargá la página para reconectar.</div>`);
-  if (!S.meta) sec.insertAdjacentHTML('beforeend', `<div class="notice warn">Todavía no hay existencias del sistema cargadas. Empezá por <a href="#importar">Importar Excel</a>.</div>`);
+  if (S.error.startsWith('db:')) sec.insertAdjacentHTML('beforeend', `<div class="notice bad">La conexión con la base falló (${esc(S.error.slice(3))}). La app sigue intentando; lo que ves puede estar desactualizado.</div>`);
+  if (!S.meta) sec.insertAdjacentHTML('beforeend', `<div class="notice warn">Todavía no hay existencias del sistema cargadas. Empezá por <a href="#importar">Importar</a>.</div>`);
   fn(sec);
   if (keepScroll) window.scrollTo(0, keepScroll);
 }
@@ -695,7 +635,7 @@ async function historialExistencias(cod) {
   for (const imp of imps) {
     if (imp.base) { const v = (imp.baseVal || {})[cod]; out.push({ fecha: imp.fechaDato, txt: 'Base inicial', x: null, imp }); continue; }
     if (!deltaCache.has(imp.id)) {
-      try { const q = await S.db.collection('importaciones/' + imp.id + '/delta').get(); const rows = []; q.docs.forEach(d => rows.push(...(d.data().rows || []))); deltaCache.set(imp.id, new Map(rows.map(r => [r[0], r]))); } catch (e) { deltaCache.set(imp.id, new Map()); }
+      try { const q = await api('delta', undefined, '&id=' + encodeURIComponent(imp.id)); deltaCache.set(imp.id, new Map(q.rows.map(r => [r[0], r]))); } catch (e) { deltaCache.set(imp.id, new Map()); }
     }
     const r = deltaCache.get(imp.id).get(cod); if (r) out.push({ fecha: imp.fechaDato, antes: r[1], despues: r[2], imp });
   }
@@ -715,7 +655,7 @@ function abrirItem(cod) {
     ${f.nuevas ? `<div class="notice info">Ya estaba relevado (cierre del ${esc(fF(f.cierre.fecha))}: ${f.cierreUbics.map(u => esc(u[0]) + ' ' + fN(u[1])).join(', ')}). Apareció en <b>${esc(f.nuevas.join(', '))}</b> con ${fN(unidadesNuevas(f))} u., que se suman al total. Si el ajuste anterior ya se cargó en el sistema, el nuevo lote ajusta solo lo encontrado ahí.</div>` : f.arrastre ? `<div class="notice info">Es un recuento de un ítem ya cerrado. El total incluye ${fN(f.arrastre.q)} u. del cierre anterior en ${esc(f.arrastre.ubics.join(', '))}, porque esas ubicaciones no se volvieron a contar.</div>` : ''}
     ${f.dobles ? `<div class="notice warn">Hay ${f.dobles + 1} conteos abiertos en una misma ubicación. Si es un recuento del mismo estante, anulá el conteo que sobra para no sumar dos veces.</div>` : ''}
     <div><h3 style="margin-bottom:8px">Conteos (${lineas.length})</h3><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Ubic.</th><th class="n">Cant.</th><th>Código impreso</th><th>Ticket nuevo</th><th>Origen</th><th>Estado</th><th></th></tr></thead><tbody>
-      ${lineas.map(l => { const cerr = S.cons.consumidas.has(l.k); return `<tr class="${l.x ? 'anulada' : ''}"><td class="mono">${esc(fF(l.t))}</td><td class="mono">${esc(l.u || '—')}</td><td class="n">${fN(l.q)}</td><td class="mono">${esc(l.b || '—')}</td><td>${l.et ? `<span class="pill p-rel">Pegado</span>${l.tk ? ` <span class="mono small">${esc(l.tk)}</span>` : ''}` : !l.x && S.canWrite ? `<button class="btn sm" data-etq="${esc(l.sesion)}|${esc(l.k)}">OK, pegado</button>` : '<span class="muted">—</span>'}</td><td class="small">${l.origen === 'excel' ? 'Excel' : 'App'}${l.r ? ' · ' + esc(l.r) : ''}</td><td>${l.x ? `<span class="pill p-bad">Anulado</span>` : cerr ? `<span class="pill p-rel">Cerrado</span>` : `<span class="pill p-curso">Abierto</span>`}</td><td>${!l.x && !cerr && S.canWrite ? `<button class="btn sm danger" data-anular="${esc(l.sesion)}|${esc(l.k)}">Anular</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="empty">Nunca se contó</td></tr>'}
+      ${lineas.map(l => { const cerr = S.cons.consumidas.has(l.k); return `<tr class="${l.x ? 'anulada' : ''}"><td class="mono">${esc(fF(l.t))}</td><td class="mono">${esc(l.u || '—')}</td><td class="n">${fN(l.q)}</td><td class="mono">${esc(l.b || '—')}</td><td>${l.et ? `<span class="pill p-rel">Pegado</span>${l.tk ? ` <span class="mono small">${esc(l.tk)}</span>` : ''}` : !l.x && S.canWrite ? `<button class="btn sm" data-etq="${esc(l.sesion)}|${esc(l.k)}">OK, pegado</button>` : '<span class="muted">—</span>'}</td><td class="small">${l.origen === 'app' ? 'App' : 'Planilla'}${l.r ? ' · ' + esc(l.r) : ''}</td><td>${l.x ? `<span class="pill p-bad">Anulado</span>` : cerr ? `<span class="pill p-rel">Cerrado</span>` : `<span class="pill p-curso">Abierto</span>`}</td><td>${!l.x && !cerr && S.canWrite ? `<button class="btn sm danger" data-anular="${esc(l.sesion)}|${esc(l.k)}">Anular</button>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="8" class="empty">Nunca se contó</td></tr>'}
     </tbody></table></div></div>
     <div><h3 style="margin-bottom:8px">Cierres y ajustes</h3>${cierres.length ? `<div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th class="n">Contado</th><th class="n">Sistema</th><th class="n">Ajuste</th><th>Lote</th></tr></thead><tbody>${cierres.map(a => { const l = a.lineas.find(x => x[0] === cod); return `<tr class="${a.anulado ? 'anulada' : ''}"><td class="mono">${esc(fF(a.creado))}</td><td class="n">${fN(l[1])}</td><td class="n">${fN(l[2])}</td><td class="n ${difCls(l[1] - l[2])}">${fSign(l[1] - l[2])}</td><td class="small">${a.anulado ? 'Anulado' : esc(a.nota || 'Lote ' + a.id.slice(3, 11))}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="muted small">Todavía no se cerró nunca.</p>'}</div>
     <div><h3 style="margin-bottom:6px">Códigos impresos asociados</h3><p class="small">${bars.map(b => `<span class="mono">${esc(b)}</span>`).join(' · ') || '<span class="muted">Ninguno registrado</span>'}</p></div>
@@ -738,21 +678,13 @@ function confirmarBoton(btn, txt, fn) {
   setTimeout(() => { if (btn.isConnected && !btn.disabled) { delete btn.dataset.armado; btn.textContent = orig; btn.classList.remove('dark'); } }, 4000);
 }
 async function marcarEtiqueta(sid, k) {
-  const path = 'sesiones/' + sid;
-  await escribir(path, () => conReintento(async () => {
-    const sn = await S.db.doc(path).get(); if (!sn.exists) throw { code: 'invalid_argument' };
-    const d = sn.data(); const lineas = d.lineas.map(l => l.k === k ? { ...l, et: true, ett: ahora(), etu: S.uid } : l);
-    await S.db.doc(path).update({ lineas, actualizado: ahora() });
-  }));
+  await escribir('sesiones/' + sid, () => conReintento(() => api('linea_marca', { k, tipo: 'ticket', user: S.uid })));
+  await refrescar();
   toast('Ticket nuevo marcado como pegado.');
 }
 async function anularLinea(sid, k) {
-  const path = 'sesiones/' + sid;
-  await escribir(path, () => conReintento(async () => {
-    const sn = await S.db.doc(path).get(); if (!sn.exists) throw { code: 'invalid_argument' };
-    const d = sn.data(); const lineas = d.lineas.map(l => l.k === k ? { ...l, x: true, xt: ahora(), xu: S.uid } : l);
-    await S.db.doc(path).update({ lineas, actualizado: ahora() });
-  }));
+  await escribir('sesiones/' + sid, () => conReintento(() => api('linea_marca', { k, tipo: 'anular', user: S.uid })));
+  await refrescar();
   toast('Conteo anulado. Queda en el historial.');
 }
 
@@ -783,7 +715,7 @@ function vCargar(sec) {
     </div>
   </div>`;
   const scan = $('#cscan', sec);
-  $('#cresp', sec).onchange = e => LS.set('responsable', e.target.value.trim());
+  $('#cresp', sec).onchange = e => { S.uid = e.target.value.trim(); LS.set('responsable', S.uid); };
   $('#cubic', sec).onchange = e => { e.target.value = e.target.value.trim().toUpperCase(); LS.set('ubicacion', e.target.value); refreshCarga(); };
   scan.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); buscarCarga(scan.value); } };
   $('#cfoto', sec).onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) fotoCodigo(f); };
@@ -964,7 +896,7 @@ async function registrar() {
   const r = ($('#cresp').value || '').trim();
   if (!(q > 0)) { toast('Ingresá una cantidad mayor a cero.'); return; }
   if (!u) { toast('Completá la ubicación antes de registrar.'); $('#cubic').focus(); return; }
-  LS.set('ubicacion', u); LS.set('responsable', r);
+  LS.set('ubicacion', u); LS.set('responsable', r); S.uid = r;
   const m = S.maestro.get(S.carga.item.c) || { d: '' };
   const bar = ($('#cbar').value || '').replace(/\s+/g, '');
   const et = !!(($('#cetq') || {}).checked);
@@ -972,18 +904,10 @@ async function registrar() {
 
   registrando = true; $('#cadd').disabled = true;
   try {
-    let se = sesionActual();
-    if (!se) {
-      const id = nuevoId('app'); LS.set('sesionActual', id);
-      const doc = { origen: 'app', creado: ahora(), actualizado: ahora(), user: S.uid, responsable: r, archivo: '', guardado: '', lineas: [linea] };
-      await escribir('sesiones/' + id, () => conReintento(() => S.db.doc('sesiones/' + id).set(doc)));
-    } else {
-      const path = 'sesiones/' + se.id;
-      await escribir(path, () => conReintento(async () => {
-        const sn = await S.db.doc(path).get(); const d = sn.data();
-        await S.db.doc(path).update({ lineas: [...(d.lineas || []), linea], actualizado: ahora() });
-      }));
-    }
+    const se = sesionActual();
+    const id = se ? se.id : nuevoId('app'); if (!se) LS.set('sesionActual', id);
+    await escribir('sesiones/' + id, () => conReintento(() => api('linea', { sesion: { id, user: S.uid, responsable: r }, linea })));
+    await refrescar();
     toast(`Registrado: ${fN(q)} × ${linea.c} en ${u}${et ? ' · ticket pegado' : ' · sin ticket nuevo'}`);
     S.carga.item = null; S.carga.cands = []; S.carga.q = ''; S.carga.bar = '';
     renderResultado(); const sc = $('#cscan'); sc.value = ''; sc.focus();
@@ -1040,11 +964,13 @@ function vAjustes(sec) {
   sec.querySelectorAll('button[data-c]').forEach(b => b.onclick = () => abrirItem(b.dataset.c));
   sec.querySelectorAll('[data-dl]').forEach(b => b.onclick = () => descargarLote(S.ajustes.find(a => a.id === b.dataset.dl)));
   sec.querySelectorAll('[data-anl]').forEach(b => b.onclick = () => confirmarBoton(b, '¿Anular?', async () => {
-    await escribir('ajustes/' + b.dataset.anl, () => conReintento(() => S.db.doc('ajustes/' + b.dataset.anl).update({ anulado: true, anuladoEl: ahora(), anuladoPor: S.uid })));
+    await escribir('ajustes/' + b.dataset.anl, () => conReintento(() => api('ajuste_marca', { id: b.dataset.anl, tipo: 'anular', user: S.uid })));
+    await refrescar();
     toast('Lote anulado. Sus ítems vuelven a En curso.');
   }));
   sec.querySelectorAll('[data-carg]').forEach(b => b.onclick = () => confirmarBoton(b, '¿Ya está en el sistema?', async () => {
-    await escribir('ajustes/' + b.dataset.carg, () => conReintento(() => S.db.doc('ajustes/' + b.dataset.carg).update({ cargado: true, cargadoEl: ahora(), cargadoPor: S.uid })));
+    await escribir('ajustes/' + b.dataset.carg, () => conReintento(() => api('ajuste_marca', { id: b.dataset.carg, tipo: 'cargado', user: S.uid })));
+    await refrescar();
     toast('Lote marcado como cargado en el sistema.');
   }));
   const bc = $('#ajcerrar', sec);
@@ -1053,7 +979,8 @@ function vAjustes(sec) {
     const doc = { creado: ahora(), user: S.uid, nota: ($('#ajnota').value || '').trim(), snap: S.meta ? S.meta.snap : '', fechaSistema: fs, anulado: false,
       lineas: sel.map(f => { const ab = S.cons.lineasPorItem.get(f.c).filter(l => !l.x && !S.cons.consumidas.has(l.k)); return [f.c, f.contado, f.x, f.co, ab.map(l => l.k), f.d, f.ubics.map(u => u[0] + ':' + u[1]).join(' | ')]; }) };
     if (JSON.stringify(doc).length > 240000) { toast('Demasiados ítems en un solo lote. Cerralos en dos tandas.', 5000); return; }
-    await escribir('ajustes/' + id, () => conReintento(() => S.db.doc('ajustes/' + id).set(doc)));
+    await escribir('ajustes/' + id, () => conReintento(() => api('ajuste', { id, doc })));
+    await refrescar();
     S.ui.ajSel.clear(); toast(`Lote cerrado con ${doc.lineas.length} ítems.`);
     modalLote({ id, ...doc });
   });
@@ -1075,10 +1002,10 @@ async function exportar(nombreArch, aoa, hoja, meta) {
     XLSX.utils.book_append_sheet(wb, ws, hoja);
     if (meta) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(Object.entries(meta)), 'Datos');
     const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
-    const dl = await window.claude?.use?.('downloads');
-    if (!dl) { toast('La descarga no está disponible en esta vista.'); return; }
-    await dl.save({ filename: nombreArch, data: buf });
-  } catch (e) { if (e && e.code !== 'cancelled' && e.code !== 'declined') toast('No se pudo generar el Excel (' + (e.code || e.message || 'error') + ').'); }
+    const url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    const a = document.createElement('a'); a.href = url; a.download = nombreArch; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch (e) { toast('No se pudo generar el Excel (' + (e.message || 'error') + ').'); }
 }
 
 // ================== Vista: Foto 0 ==================
@@ -1129,10 +1056,9 @@ function cascada(T) {
 }
 async function guardarFoto0() {
   const id = nuevoId('f0'); const items = [...S.maestro.values()].map(m => [m.c, m.x, m.co, m.d]);
-  const N = Math.ceil(items.length / Core.CHUNK_MAESTRO);
-  for (let i = 0; i < N; i++) await conReintento(() => S.db.doc('foto0/' + id + '-f' + i).set({ i, items: items.slice(i * Core.CHUNK_MAESTRO, (i + 1) * Core.CHUNK_MAESTRO) }));
-  await conReintento(() => S.db.doc('config/foto0').set({ id, chunks: N, total: items.length, fechaDato: S.meta.fechaDato, archivo: S.meta.archivo || '', importacion: S.meta.importacion || '', marcado: ahora(), user: S.uid, valor: Math.round(items.reduce((a, i) => a + Math.max(i[1], 0) * i[2], 0)) }));
-  for (const k of [...S.foto0Chunks.keys()]) if (!k.startsWith(id + '-')) { try { await S.db.doc('foto0/' + k).delete(); } catch (e) { } }
+  const meta = { fechaDato: S.meta.fechaDato, archivo: S.meta.archivo || '', importacion: S.meta.importacion || '', user: S.uid, valor: Math.round(items.reduce((a, i) => a + Math.max(i[1], 0) * i[2], 0)) };
+  await conReintento(() => api('foto0', { id, items, meta }));
+  await refrescar();
   toast('Foto 0 guardada.');
 }
 function vFoto0(sec) {
@@ -1214,7 +1140,7 @@ function eventos() {
   const ev = [];
   for (const i of S.importaciones) {
     if (i.tipo === 'existencias') ev.push({ t: i.creado, tipo: 'imp', ico: 'EX', txt: `Importó existencias del sistema al ${fF(i.fechaDato)}`, det: `${i.archivo || ''} · ${nf0.format(i.total || 0)} artículos${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios || 0)} con cambios de existencia, ${nf0.format(i.nuevos || 0)} nuevos, ${nf0.format(i.bajas || 0)} dados de baja`}`, u: i.user });
-    else ev.push({ t: i.creado, tipo: 'imp', ico: 'RV', txt: `Importó relevamiento desde Excel`, det: `${i.archivo || ''} · ${i.nuevas} líneas nuevas · ${i.duplicadas} ya cargadas · ${i.rechazadas} rechazadas`, u: i.user });
+    else ev.push({ t: i.creado, tipo: 'imp', ico: 'RV', txt: `Leyó conteos de la planilla`, det: `${i.nuevas} líneas nuevas · ${i.bajas || 0} quitadas · ${i.rechazadas} rechazadas`, u: i.user });
   }
   for (const s of S.sesiones) {
     const ls = s.lineas || [];
@@ -1243,97 +1169,95 @@ function vHistorial(sec) {
 let pend = null;
 function vImportar(sec) {
   const imps = S.importaciones.slice().sort((a, b) => b.creado.localeCompare(a.creado));
-  sec.innerHTML = `<div><h2>Importar Excel</h2><p class="lead">Cargá el informe de existencias del sistema y los Excel de relevamiento. Cada importación queda en el historial. Si subís un relevamiento que ya tenía líneas cargadas, esas líneas se ignoran.</p></div>
+  sec.innerHTML = `<div><h2>Importar</h2><p class="lead">Las existencias se importan desde el Excel del sistema. Los conteos se leen solos de la planilla de Google cada 5 minutos, y lo que se carga en la app se copia a su pestaña App Conteos.</p></div>
   ${!S.canWrite ? '<div class="notice warn">Tenés acceso de solo lectura: no podés importar.</div>' : ''}
   <div class="cols2">
     <div class="drop"><h3>Existencias del sistema</h3><p class="small muted" style="margin:0">Informe con columnas Articulo, Descripcion, Ubicacion, Cost.medio, Exist. (.xls o .xlsx). Reemplaza la foto actual del sistema y guarda qué existencias cambiaron.</p>
       <div class="field"><label for="ifecha">Fecha y hora del informe</label><input type="datetime-local" id="ifecha"></div>
       <input type="file" id="iex" accept=".xls,.xlsx" ${S.canWrite ? '' : 'disabled'}></div>
-    <div class="drop"><h3>Relevamiento (conteos)</h3><p class="small muted" style="margin:0">Excel con columnas ID (artículo), Codigo (impreso), Producto, Cantidad, Ubicacion y Fecha y Hora. Cada bloque "GUARDADO EL" se guarda como una sesión.</p>
-      <input type="file" id="irv" accept=".xls,.xlsx" ${S.canWrite && S.maestro.size ? '' : 'disabled'}>
-      ${!S.maestro.size ? '<span class="small muted">Primero importá las existencias.</span>' : ''}</div>
+    <div class="drop"><h3>Relevamiento (Google Sheets)</h3><div id="ppan"></div></div>
   </div>
   <div id="iprev"></div>
+  <div id="prech"></div>
   <div class="panel"><div class="panel-head"><h3>Importaciones anteriores</h3></div><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Archivo</th><th>Resultado</th><th>Por</th></tr></thead><tbody>
-  ${imps.map(i => `<tr><td class="mono">${esc(fF(i.creado))}</td><td>${i.tipo === 'existencias' ? 'Existencias' : 'Relevamiento'}</td><td class="small">${esc(i.archivo || '')}</td><td class="small">${i.tipo === 'existencias' ? `Informe al ${esc(fF(i.fechaDato))} · ${nf0.format(i.total)} art.${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios)} cambios`}` : `${i.nuevas} nuevas · ${i.duplicadas} repetidas · ${i.rechazadas} rechazadas`}</td><td class="small">${esc(nombre(i.user))}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Sin importaciones</td></tr>'}
+  ${imps.map(i => `<tr><td class="mono">${esc(fF(i.creado))}</td><td>${i.tipo === 'existencias' ? 'Existencias' : 'Relevamiento'}</td><td class="small">${esc(i.archivo || '')}</td><td class="small">${i.tipo === 'existencias' ? `Informe al ${esc(fF(i.fechaDato))} · ${nf0.format(i.total)} art.${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios)} cambios`}` : `${i.nuevas} nuevas · ${i.bajas || 0} quitadas · ${i.rechazadas} rechazadas`}</td><td class="small">${esc(nombre(i.user))}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Sin importaciones</td></tr>'}
   </tbody></table></div></div>`;
   const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); $('#ifecha', sec).value = d.toISOString().slice(0, 16);
-  $('#iex', sec).onchange = e => leerArchivo(e.target.files[0], 'ex');
-  $('#irv', sec).onchange = e => leerArchivo(e.target.files[0], 'rv');
+  $('#iex', sec).onchange = e => leerArchivo(e.target.files[0]);
   if (pend) mostrarPreview();
+  panelPlanilla();
 }
-async function leerArchivo(file, tipo) {
+async function leerArchivo(file) {
   if (!file) return;
   const box = $('#iprev'); box.innerHTML = '<div class="notice info">Leyendo archivo…</div>';
   try {
     const wb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false });
     const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: null });
-    if (tipo === 'ex') {
-      const r = Core.parseExistencias(aoa);
-      const fd = ($('#ifecha').value || '').replace('T', ' ') + ':00';
-      const prev = S.maestro; const nuevo = new Map(r.items.map(i => [i[0], i]));
-      const delta = [];
-      let nuevos = 0, bajas = 0, cambios = 0;
-      for (const it of r.items) { const p = prev.get(it[0]); if (!p) { nuevos++; if (prev.size) delta.push([it[0], null, it[3]]); } else if (p.x !== it[3]) { cambios++; delta.push([it[0], p.x, it[3]]); } }
-      for (const c of prev.keys()) if (!nuevo.has(c)) { bajas++; delta.push([c, prev.get(c).x, null]); }
-      pend = { tipo, archivo: file.name, r, fd, delta, nuevos, bajas, cambios, base: !prev.size, conStock: r.items.filter(i => i[3] > 0).length, valor: r.items.reduce((a, i) => a + Math.max(i[3], 0) * i[4], 0) };
-    } else {
-      const r = Core.parseRelevamiento(aoa, c => S.maestro.has(c));
-      const existentes = new Set(); S.sesiones.forEach(s => (s.lineas || []).forEach(l => existentes.add(l.k)));
-      let dup = 0; const bloques = r.bloques.map(b => ({ ...b, lineas: b.lineas.filter(l => existentes.has(l.k) ? (dup++, false) : true) })).filter(b => b.lineas.length);
-      pend = { tipo, archivo: file.name, bloques, rechazadas: r.rechazadas, dup, nuevas: bloques.reduce((a, b) => a + b.lineas.length, 0) };
-    }
+    const r = Core.parseExistencias(aoa);
+    const fd = ($('#ifecha').value || '').replace('T', ' ') + ':00';
+    const prev = S.maestro; const nuevo = new Map(r.items.map(i => [i[0], i]));
+    const delta = [];
+    let nuevos = 0, bajas = 0, cambios = 0;
+    for (const it of r.items) { const p = prev.get(it[0]); if (!p) { nuevos++; if (prev.size) delta.push([it[0], null, it[3]]); } else if (p.x !== it[3]) { cambios++; delta.push([it[0], p.x, it[3]]); } }
+    for (const c of prev.keys()) if (!nuevo.has(c)) { bajas++; delta.push([c, prev.get(c).x, null]); }
+    pend = { archivo: file.name, r, fd, delta, nuevos, bajas, cambios, base: !prev.size, conStock: r.items.filter(i => i[3] > 0).length, valor: r.items.reduce((a, i) => a + Math.max(i[3], 0) * i[4], 0) };
     mostrarPreview();
   } catch (e) { pend = null; box.innerHTML = `<div class="notice bad">No pude leer el archivo: ${esc(e.message || e)}</div>`; }
 }
 function mostrarPreview() {
   const box = $('#iprev'); if (!box || !pend) return; const p = pend;
-  if (p.tipo === 'ex') {
-    box.innerHTML = `<div class="panel"><div class="panel-head"><h3>Vista previa · ${esc(p.archivo)}</h3></div>
+  box.innerHTML = `<div class="panel"><div class="panel-head"><h3>Vista previa · ${esc(p.archivo)}</h3></div>
     <div class="grid kpis"><div class="kpi"><span class="label">Artículos</span><span class="v">${nf0.format(p.r.items.length)}</span><span class="s">${nf0.format(p.conStock)} con existencia</span></div><div class="kpi"><span class="label">Valor a costo</span><span class="v">${f$(p.valor)}</span></div>
     <div class="kpi info"><span class="label">Cambios vs. anterior</span><span class="v">${p.base ? 'Base' : nf0.format(p.cambios)}</span><span class="s">${p.base ? 'primera importación' : `${p.nuevos} nuevos · ${p.bajas} bajas`}</span></div></div>
     ${p.r.duplicados.length ? `<div class="notice warn" style="margin-top:10px">El informe repite ${p.r.duplicados.length} artículo(s): ${esc(p.r.duplicados.slice(0, 10).join(', '))}. Se sumaron sus existencias.</div>` : ''}
     <div class="toolbar" style="margin-top:12px"><span class="small">Fecha del informe: <b>${esc(fF(p.fd))}</b></span><span class="sp" style="margin-left:auto"></span><button class="btn" id="pcancel">Descartar</button><button class="btn primary" id="pok">Importar existencias</button></div><div id="pprog" class="small muted"></div></div>`;
-  } else {
-    box.innerHTML = `<div class="panel"><div class="panel-head"><h3>Vista previa · ${esc(p.archivo)}</h3></div>
-    <div class="grid kpis"><div class="kpi gold"><span class="label">Líneas nuevas</span><span class="v">${p.nuevas}</span><span class="s">en ${p.bloques.length} sesión(es)</span></div><div class="kpi"><span class="label">Ya cargadas</span><span class="v">${p.dup}</span><span class="s">se ignoran</span></div><div class="kpi bad"><span class="label">Rechazadas</span><span class="v">${p.rechazadas.length}</span></div></div>
-    ${p.rechazadas.length ? `<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Fila</th><th>ID</th><th>Producto</th><th class="n">Cant.</th><th>Motivo</th></tr></thead><tbody>${p.rechazadas.slice(0, 50).map(r => `<tr><td class="n">${r.fila}</td><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td class="n">${fN(r.q)}</td><td class="small">${esc(r.motivo)}</td></tr>`).join('')}</tbody></table></div>` : ''}
-    <div class="toolbar" style="margin-top:12px"><span class="sp" style="margin-left:auto"></span><button class="btn" id="pcancel">Descartar</button><button class="btn primary" id="pok" ${p.nuevas ? '' : 'disabled'}>Importar ${p.nuevas} líneas</button></div><div id="pprog" class="small muted"></div></div>`;
-  }
   $('#pcancel').onclick = () => { pend = null; box.innerHTML = ''; };
   $('#pok').onclick = async () => {
     const b = $('#pok'); b.disabled = true; $('#pcancel').disabled = true;
-    try { p.tipo === 'ex' ? await importarExistencias(p) : await importarRelevamiento(p); pend = null; box.innerHTML = '<div class="notice ok">Importación guardada.</div>'; }
+    try { await importarExistencias(p); }
     catch (e) { $('#pprog').textContent = ''; box.insertAdjacentHTML('beforeend', `<div class="notice bad">${esc(errMsg(e))}</div>`); b.disabled = false; $('#pcancel').disabled = false; }
   };
 }
 const prog = t => { const el = $('#pprog'); if (el) el.textContent = t; };
 async function importarExistencias(p) {
-  const db = S.db; const snap = nuevoId('snap'); const impId = nuevoId('imp');
+  const snap = nuevoId('snap'); const impId = nuevoId('imp');
   const items = p.r.items; const N = Math.ceil(items.length / Core.CHUNK_MAESTRO);
   for (let i = 0; i < N; i++) {
     prog(`Guardando artículos ${i + 1}/${N}…`);
-    await conReintento(() => db.doc('maestro/m' + i).set({ snap, i, items: items.slice(i * Core.CHUNK_MAESTRO, (i + 1) * Core.CHUNK_MAESTRO) }));
+    await conReintento(() => api('maestro_chunk', { snap, i, items: items.slice(i * Core.CHUNK_MAESTRO, (i + 1) * Core.CHUNK_MAESTRO) }));
   }
-  const prevN = S.meta ? S.meta.chunks : 0;
-  for (let i = N; i < prevN; i++) await conReintento(() => db.doc('maestro/m' + i).delete());
-  for (let i = 0; i * 5000 < p.delta.length; i++) {
-    prog('Guardando cambios de existencia…');
-    await conReintento(() => db.doc(`importaciones/${impId}/delta/d${i}`).set({ rows: p.delta.slice(i * 5000, (i + 1) * 5000) }));
-  }
-  await conReintento(() => db.doc('importaciones/' + impId).set({ tipo: 'existencias', creado: ahora(), user: S.uid, archivo: p.archivo, fechaDato: p.fd, snap, total: items.length, conStock: p.conStock, valor: Math.round(p.valor), nuevos: p.nuevos, bajas: p.bajas, cambios: p.cambios, base: p.base, duplicados: p.r.duplicados }));
-  await conReintento(() => db.doc('config/maestro').set({ snap, chunks: N, total: items.length, fechaDato: p.fd, archivo: p.archivo, importacion: impId, actualizado: ahora() }));
+  prog('Cerrando la importación…');
+  await conReintento(() => api('maestro_fin', { snap, impId, total: items.length, fechaDato: p.fd, archivo: p.archivo, user: S.uid, conStock: p.conStock, valor: Math.round(p.valor), nuevos: p.nuevos, bajas: p.bajas, cambios: p.cambios, base: p.base, duplicados: p.r.duplicados, delta: p.delta }));
+  prog('Leyendo la planilla…');
+  try { await api('sincronizar', {}); } catch (e) { }
+  pend = null; // antes de refrescar: si no, la vista se redibuja con la vista previa activa
+  await refrescar();
   toast('Existencias importadas.');
 }
-async function importarRelevamiento(p) {
-  const ids = []; let n = 0;
-  for (const b of p.bloques) for (let i = 0; i < b.lineas.length; i += Core.LINEAS_POR_SESION) {
-    const id = nuevoId('xls'); ids.push(id); n++;
-    prog(`Guardando sesión ${n}…`);
-    await conReintento(() => S.db.doc('sesiones/' + id).set({ origen: 'excel', creado: b.guardado || ahora(), actualizado: ahora(), user: S.uid, responsable: '', archivo: p.archivo, guardado: b.guardado, lineas: b.lineas.slice(i, i + Core.LINEAS_POR_SESION) }));
-  }
-  await conReintento(() => S.db.doc('importaciones/' + nuevoId('imp')).set({ tipo: 'relevamiento', creado: ahora(), user: S.uid, archivo: p.archivo, nuevas: p.nuevas, duplicadas: p.dup, rechazadas: p.rechazadas.length, sesiones: ids }));
-  toast(`${p.nuevas} líneas importadas.`);
+
+// ================== Panel de la planilla ==================
+async function sincronizarAhora() {
+  S.sincronizando = true; panelPlanilla();
+  try { const r = await api('sincronizar', {}); if (r.limitado) toast('La planilla se leyó hace un momento. Esperá unos segundos.'); await refrescar(); }
+  catch (e) { toast(errMsg(e)); }
+  finally { S.sincronizando = false; panelPlanilla(); }
+}
+function panelPlanilla() {
+  const el = $('#ppan'); if (!el) return;
+  const p = S.planilla || {}, c = S.cola || {};
+  const lectura = p.ultima ? `Última lectura: <b>${esc(fF(p.ultima))}</b> · ${nf0.format(p.lineas || 0)} líneas` : 'Todavía no se leyó la planilla.';
+  const salida = !c.script ? `<div class="notice warn" style="margin-top:10px">La escritura en la planilla todavía no está conectada. ${c.pendientes ? nf0.format(c.pendientes) + ' conteos esperan en la cola; no se pierden.' : ''}</div>`
+    : c.error ? `<div class="notice bad" style="margin-top:10px">No se pudo escribir en la planilla: ${esc(c.error)}. ${nf0.format(c.pendientes)} pendientes; se reintenta solo.</div>`
+    : `<p class="small muted" style="margin:8px 0 0">${c.pendientes ? nf0.format(c.pendientes) + ' conteos por copiar a la planilla.' : 'Todo lo cargado en la app ya está en la planilla.'}</p>`;
+  el.innerHTML = `<p class="small" style="margin:0">${lectura}</p>
+    ${p.ok === false ? `<div class="notice bad" style="margin-top:10px">${esc(p.error || 'No se pudo leer la planilla.')}</div>` : ''}
+    ${(p.pestanas || []).length ? `<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Pestaña</th><th class="n">Líneas</th><th class="n">Rechazadas</th></tr></thead><tbody>${p.pestanas.map(t => `<tr><td class="small">${esc(t.nombre)}</td><td class="n">${nf0.format(t.lineas)}</td><td class="n">${nf0.format(t.rechazadas)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    ${salida}
+    <div class="toolbar" style="margin-top:12px"><button class="btn" id="psync" ${S.sincronizando || !S.maestro.size ? 'disabled' : ''}>${S.sincronizando ? 'Leyendo…' : 'Actualizar ahora'}</button>${!S.maestro.size ? '<span class="small muted">Primero importá las existencias.</span>' : ''}</div>`;
+  $('#psync').onclick = sincronizarAhora;
+  const rec = $('#prech'); if (!rec) return;
+  const rs = p.rechazadas || [];
+  rec.innerHTML = rs.length ? `<div class="panel"><div class="panel-head"><h3>Líneas de la planilla rechazadas (${nf0.format(p.totalRechazadas || rs.length)})</h3></div><div class="tbl-wrap"><table><thead><tr><th>Pestaña</th><th class="n">Fila</th><th>ID</th><th>Producto</th><th class="n">Cant.</th><th>Motivo</th></tr></thead><tbody>${rs.map(r => `<tr><td class="small">${esc(r.hoja)}</td><td class="n">${r.fila}</td><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td class="n">${fN(r.q)}</td><td class="small">${esc(r.motivo)}</td></tr>`).join('')}</tbody></table></div></div>` : '';
 }
 
 init();

@@ -6,3 +6,9 @@
 # Archivos de bloqueo de LibreOffice / Office
 .~lock.*#
 ~$*
+
+# Configuración y datos del servidor
+config.php
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

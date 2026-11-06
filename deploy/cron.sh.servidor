@@ -1,0 +1,41 @@
+#!/bin/bash
+# Se instala como ~/domains/<sitio>/itala/cron.sh, fuera del clone, para que un pull no lo pise
+# mientras corre. El cron de hPanel lo ejecuta cada minuto: publica lo nuevo de main y corre
+# las tareas de bin/cron.php.
+
+set -u
+SITIO="$HOME/domains/itala-stock.ciafconsultora.com.ar"
+APP="$SITIO/public_html"
+ESTADO="$SITIO/itala"
+LOG="$ESTADO/cron.log"
+LOCK="$ESTADO/.cron.lock"
+
+if ! mkdir "$LOCK" 2>/dev/null; then
+    # Un candado de más de 15 minutos quedó colgado de una corrida interrumpida.
+    if [ -n "$(find "$LOCK" -maxdepth 0 -mmin +15 2>/dev/null)" ]; then
+        rmdir "$LOCK"
+        mkdir "$LOCK" || exit 0
+    else
+        exit 0
+    fi
+fi
+trap 'rmdir "$LOCK"' EXIT
+
+touch "$ESTADO/.latido"
+cd "$APP" || exit 1
+
+if git fetch -q origin main 2>>"$LOG"; then
+    if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+        if git merge -q --ff-only origin/main >>"$LOG" 2>&1 && php bin/migrar.php >>"$LOG" 2>&1; then
+            echo "$(date '+%F %T') deploy OK $(git rev-parse --short HEAD)" >>"$LOG"
+        else
+            echo "$(date '+%F %T') deploy FALLÓ en $(git rev-parse --short HEAD)" >>"$LOG"
+        fi
+    fi
+fi
+
+php bin/cron.php >>"$LOG" 2>&1
+
+if [ "$(wc -c <"$LOG")" -gt 1000000 ]; then
+    tail -n 2000 "$LOG" >"$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+fi

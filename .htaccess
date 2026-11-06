@@ -1,0 +1,7 @@
+# En Hostinger el docroot (public_html) es el clone del repo: se sirve solo public/.
+# Nada fuera de public/ queda accesible por web.
+Options -Indexes
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
