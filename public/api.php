@@ -8,7 +8,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/src/bootstrap.php';
 
 const MAX_CUERPO = 8 * 1024 * 1024;
-const PAUSA_SINCRONIZAR = 20; // segundos entre pedidos manuales
+const PAUSA_SINCRONIZAR = 10; // segundos entre lecturas pedidas a mano
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -50,7 +50,7 @@ function sincronizarAhora(): array
         return ['ok' => true, 'limitado' => true];
     }
     $r = Planilla::sincronizar();
-    return ['ok' => true, 'lectura' => array_intersect_key($r, array_flip(['ok', 'error', 'nuevas', 'bajas']))];
+    return ['ok' => true, 'lectura' => array_intersect_key($r, array_flip(['ok', 'error', 'nuevas', 'bajas', 'cambios']))];
 }
 
 try {

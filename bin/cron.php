@@ -2,11 +2,11 @@
 declare(strict_types=1);
 
 // Tareas periódicas. El cron de hPanel lo corre cada minuto a través de cron.sh:
-// envía la cola a la planilla, lee la planilla cada 5 minutos y respalda la base una vez por día.
+// envía la cola a la planilla, la lee en cada corrida y respalda la base una vez por día.
 
 require __DIR__ . '/../src/bootstrap.php';
 
-const CADA_LECTURA = 300;
+const CADA_LECTURA = 55; // algo menos de un minuto: el cron no arranca siempre en el mismo segundo
 const DIAS_RESPALDO = 14;
 
 $cola = Planilla::enviarCola();
@@ -16,8 +16,8 @@ if (!empty($cola['enviadas']) || !empty($cola['error'])) {
 
 if (time() - (int) Datos::leer('planilla_intento', 0) >= CADA_LECTURA) {
     $r = Planilla::sincronizar();
-    if (empty($r['ok']) || !empty($r['nuevas']) || !empty($r['bajas'])) {
-        echo ahora() . ' planilla: ' . aJson(array_intersect_key($r, array_flip(['ok', 'error', 'lineas', 'nuevas', 'bajas']))) . "\n";
+    if (empty($r['ok']) || !empty($r['nuevas']) || !empty($r['bajas']) || !empty($r['cambios'])) {
+        echo ahora() . ' planilla: ' . aJson(array_intersect_key($r, array_flip(['ok', 'error', 'lineas', 'nuevas', 'bajas', 'cambios']))) . "\n";
     }
 }
 

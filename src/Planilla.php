@@ -73,30 +73,31 @@ final class Planilla
         return tx(function (PDO $pdo) use ($hojas) {
             $hoy = ahora();
             $existencias = self::aplicarExistencias($pdo, $hojas, $hoy);
-            $articulos = array_flip($pdo->query('SELECT c FROM articulos')->fetchAll(PDO::FETCH_COLUMN));
             $previas = [];
-            foreach ($pdo->query("SELECT l.k, l.eliminada FROM lineas l JOIN sesiones s ON s.id = l.sesion_id WHERE s.origen = 'planilla'") as $f) {
-                $previas[$f['k']] = (int) $f['eliminada'];
+            foreach ($pdo->query("SELECT l.k, l.sesion_id, l.datos, l.eliminada FROM lineas l JOIN sesiones s ON s.id = l.sesion_id WHERE s.origen = 'planilla'") as $f) {
+                $previas[$f['k']] = $f;
             }
-            // Sin existencias no hay contra qué validar. Una línea ya copiada sigue valiendo
-            // aunque su artículo salga del maestro.
-            $existe = fn (string $c, string $k) => !$articulos || isset($articulos[$c]) || isset($previas[$k]);
 
             $apariciones = [];
             $vistas = [];
             $pestanas = [];
+            $ignoradas = [];
             $rechazadas = [];
             $altaSesion = $pdo->prepare("INSERT OR IGNORE INTO sesiones (id, origen, creado, actualizado, user, responsable, archivo, guardado) VALUES (?, 'planilla', ?, ?, '', '', ?, ?)");
             $altaLinea = $pdo->prepare('INSERT INTO lineas (k, sesion_id, c, datos) VALUES (?, ?, ?, ?)');
-            $reactivar = $pdo->prepare('UPDATE lineas SET eliminada = 0 WHERE k = ?');
+            $actualizar = $pdo->prepare('UPDATE lineas SET sesion_id = ?, datos = ?, eliminada = 0 WHERE k = ?');
             $nuevas = 0;
+            $cambios = 0;
 
             foreach ($hojas as $hoja) {
                 if ($hoja['nombre'] === self::HOJA_APP) {
                     continue;
                 }
-                $r = self::parsearHoja($hoja['nombre'], $hoja['filas'], $existe, $apariciones);
+                $r = self::parsearHoja($hoja['nombre'], $hoja['filas'], $apariciones);
                 if ($r === null) {
+                    if ($hoja['nombre'] !== ($existencias['nombre'] ?? null)) {
+                        $ignoradas[] = $hoja['nombre'];
+                    }
                     continue;
                 }
                 $pestanas[] = ['nombre' => $hoja['nombre'], 'lineas' => $r['total'], 'rechazadas' => count($r['rechazadas'])];
@@ -107,12 +108,21 @@ final class Planilla
                     $altaSesion->execute([$sid, $creado, $hoy, $hoja['nombre'], $b['guardado']]);
                     foreach ($b['lineas'] as $l) {
                         $vistas[$l['k']] = true;
-                        if (!isset($previas[$l['k']])) {
+                        $previa = $previas[$l['k']] ?? null;
+                        if ($previa === null) {
                             $altaLinea->execute([$l['k'], $sid, $l['c'], aJson($l)]);
                             $nuevas++;
-                        } elseif ($previas[$l['k']] === 1) {
-                            $reactivar->execute([$l['k']]);
-                            $nuevas++;
+                            continue;
+                        }
+                        // La clave no incluye producto ni estado, y una fila puede cambiar de
+                        // pestaña: la planilla manda en sus columnas. Las marcas de la app
+                        // (ticket, anulación) no están en la planilla y se conservan.
+                        $antes = json_decode($previa['datos'], true);
+                        $volvio = (int) $previa['eliminada'] === 1;
+                        $distinta = $previa['sesion_id'] !== $sid || $l['d'] !== ($antes['d'] ?? '') || $l['e'] !== ($antes['e'] ?? '');
+                        if ($volvio || $distinta) {
+                            $actualizar->execute([$sid, aJson($l + $antes), $l['k']]);
+                            $volvio ? $nuevas++ : $cambios++;
                         }
                     }
                 }
@@ -120,7 +130,7 @@ final class Planilla
             if (!$pestanas) {
                 throw new RuntimeException('No encontré pestañas con los encabezados ID y Codigo.');
             }
-            $activas = array_filter($previas, fn ($e) => $e === 0);
+            $activas = array_filter($previas, fn ($p) => (int) $p['eliminada'] === 0);
             if (!$vistas && $activas) {
                 throw new RuntimeException('La planilla vino sin conteos. No se cambió nada en la base.');
             }
@@ -140,15 +150,16 @@ final class Planilla
 
             $estado = [
                 'ok' => true, 'error' => null, 'ultima' => $hoy, 'intento' => $hoy, 'pestanas' => $pestanas,
-                'lineas' => count($vistas), 'nuevas' => $nuevas, 'bajas' => $bajas,
+                'ignoradas' => $ignoradas,
+                'lineas' => count($vistas), 'nuevas' => $nuevas, 'bajas' => $bajas, 'cambios' => $cambios,
                 'rechazadas' => array_slice($rechazadas, 0, 200), 'totalRechazadas' => count($rechazadas),
                 'existencias' => $existencias,
             ];
             Datos::guardar('planilla', $estado);
-            if ($nuevas || $bajas) {
+            if ($nuevas || $bajas || $cambios) {
                 $doc = [
                     'tipo' => 'relevamiento', 'creado' => $hoy, 'user' => '', 'archivo' => 'Google Sheets',
-                    'nuevas' => $nuevas, 'bajas' => $bajas, 'duplicadas' => 0, 'rechazadas' => count($rechazadas),
+                    'nuevas' => $nuevas, 'bajas' => $bajas, 'cambios' => $cambios, 'duplicadas' => 0, 'rechazadas' => count($rechazadas),
                 ];
                 $pdo->prepare('INSERT INTO importaciones (id, tipo, creado, datos) VALUES (?, ?, ?, ?)')
                     ->execute(['imp-hoja-' . bin2hex(random_bytes(6)), 'relevamiento', $hoy, aJson($doc)]);
@@ -403,7 +414,7 @@ final class Planilla
     }
 
     /** @return array{bloques: array, rechazadas: array, total: int}|null  null si no tiene los encabezados. */
-    public static function parsearHoja(string $nombre, array $filas, callable $existe, array &$apariciones): ?array
+    public static function parsearHoja(string $nombre, array $filas, array &$apariciones): ?array
     {
         $inicio = null;
         $encabezado = [];
@@ -472,8 +483,6 @@ final class Planilla
                 $motivo = 'Sin código de artículo';
             } elseif (!preg_match(self::FORMATO_ARTICULO, $l['c'])) {
                 $motivo = 'Código con formato inválido';
-            } elseif (!$existe($l['c'], $l['k'])) {
-                $motivo = 'El artículo no existe en el sistema';
             } elseif ($l['q'] <= 0) {
                 $motivo = 'Cantidad vacía o cero';
             }

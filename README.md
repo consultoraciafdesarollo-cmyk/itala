@@ -6,7 +6,7 @@ PHP 8.2 sin framework ni dependencias, con SQLite. Las pantallas son `public/ind
 
 ## Cómo funciona
 
-- **Conexión:** la app no importa nada. El servidor lee la planilla de Google cada 5 minutos (`src/Planilla.php`).
+- **Conexión:** la app no importa nada. El servidor lee todas las pestañas de la planilla de Google cada minuto (`src/Planilla.php`).
 - **Conteos:** todas las pestañas con encabezados `ID` y `Codigo`.
 - **Existencias (opcional):** una pestaña con encabezado `Articulo`. Sin ella, la app muestra solo conteos y oculta valores, Cierres y Foto 0.
 - **Lo cargado en la app:** se guarda en la base y sale por una cola hacia la pestaña `App Conteos`, mediante un Apps Script (`apps-script/`). Si Google falla, la cola reintenta sola.

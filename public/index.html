@@ -240,7 +240,8 @@ const Core = (() => {
     const filas = [];
     const codigos = new Set([...maestro.keys(), ...porItem.keys(), ...cierre.keys()]);
     for (const c of codigos) {
-      const m = maestro.get(c) || { c, d: '(no está en el maestro actual)', u: '', x: 0, co: 0, p: 0, cl: '' };
+      const conDescripcion = (lineasPorItem.get(c) || []).find(l => l.d);
+      const m = maestro.get(c) || { c, d: conDescripcion ? conDescripcion.d : '(no está en el maestro actual)', u: '', x: 0, co: 0, p: 0, cl: '' };
       const ab = porItem.get(c), ci = cierre.get(c);
       let estado = 'pendiente';
       if (ab) estado = 'curso'; else if (ci) estado = 'relevado';
@@ -402,6 +403,7 @@ async function refrescar() {
       if (f0 !== S.foto0Snap) await cargarFoto0();
       S.version = e.version; S.listo = true; S.error = ''; changed();
     } else if (S.error) { S.error = ''; scheduleRender(); }
+    else if (S.listo) renderStatus(); // solo la barra: redibujar la vista cortaría lo que se esté cargando
     panelPlanilla();
     if (!primeraLectura && !(S.planilla && S.planilla.ultima)) { // nadie leyó todavía: no esperar al cron
       primeraLectura = true; await api('sincronizar', {}).catch(() => { }); otraVez = true;
@@ -425,7 +427,9 @@ function renderStatus() {
   const dot = $('#dbdot'), txt = $('#dbtxt');
   const st = $('#status');
   let extra = '';
-  if (S.meta) extra += `<span>Sistema al <b>${esc(fF(S.meta.fechaDato))}</b></span>`;
+  const pl = S.planilla;
+  if (pl && pl.ultima) extra += `<span>Planilla leída <b>${esc(fF(pl.ultima))}</b>${pl.ok === false ? ' · <b>con error</b>' : ''}</span>`;
+  if (S.meta) extra += `<span>Existencias al <b>${esc(fF(S.meta.fechaDato))}</b></span>`;
   extra += `<span>${sinExistencias() ? 'Artículos contados' : 'Artículos'} <b>${nf0.format(S.maestro.size)}</b></span>`;
   if (!S.canWrite) extra += `<span><b>Solo lectura</b></span>`;
   extra += `<button class="actualizar" id="hsync" ${S.sincronizando ? 'disabled' : ''}>${S.sincronizando ? 'Actualizando…' : 'Actualizar'}</button>`;
@@ -476,6 +480,7 @@ function etqPill(f) {
 }
 function marcas(f) {
   let h = f.dobles ? ' <span class="pill p-bad" title="Hay más de un conteo abierto en la misma ubicación">doble</span>' : '';
+  if (!f.enMaestro) h += ' <span class="pill p-info" title="Está en la planilla pero no en el informe de existencias: el sistema lo toma como 0">no está en el maestro</span>';
   if (f.nuevas) h += ` <span class="pill p-info" title="Ya relevado; apareció en ${esc(f.nuevas.join(', '))}. Se suma al total.">ubicación nueva</span>`;
   else if (f.arrastre) h += ` <span class="pill p-info" title="Recuento: incluye lo contado en el cierre anterior en ${esc(f.arrastre.ubics.join(', '))}">recuento</span>`;
   return h;
@@ -1161,7 +1166,7 @@ function eventos() {
   const ev = [];
   for (const i of S.importaciones) {
     if (i.tipo === 'existencias') ev.push({ t: i.creado, tipo: 'imp', ico: 'EX', txt: `Actualizó existencias del sistema al ${fF(i.fechaDato)}`, det: `${i.archivo || ''} · ${nf0.format(i.total || 0)} artículos${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios || 0)} con cambios de existencia, ${nf0.format(i.nuevos || 0)} nuevos, ${nf0.format(i.bajas || 0)} dados de baja`}`, u: i.user });
-    else ev.push({ t: i.creado, tipo: 'imp', ico: 'RV', txt: `Leyó conteos de la planilla`, det: `${i.nuevas} líneas nuevas · ${i.bajas || 0} quitadas · ${i.rechazadas} rechazadas`, u: i.user });
+    else ev.push({ t: i.creado, tipo: 'imp', ico: 'RV', txt: `Leyó conteos de la planilla`, det: `${i.nuevas} líneas nuevas · ${i.cambios ? i.cambios + ' corregidas · ' : ''}${i.bajas || 0} quitadas · ${i.rechazadas} rechazadas`, u: i.user });
   }
   for (const s of S.sesiones) {
     const ls = s.lineas || [];
@@ -1193,14 +1198,14 @@ function vPlanilla(sec) {
     ? `<p class="small" style="margin:0">Tomadas de la pestaña <b>${esc(S.meta.archivo || '')}</b> · ${nf0.format(S.meta.total || 0)} artículos · actualizadas el ${esc(fF(S.meta.fechaDato))}.</p><p class="small muted" style="margin:8px 0 0">Para actualizarlas, reemplazá el contenido de esa pestaña. La app lo toma sola.</p>`
     : `<p class="small" style="margin:0">La planilla todavía no tiene existencias. Con ellas se activan faltantes, sobrantes, Cierres y ajustes, y Foto 0.</p>
       <p class="small muted" style="margin:8px 0 0">Para activarlas, agregá a la planilla una pestaña con las columnas <b>Articulo</b>, <b>Descripcion</b>, <b>Ubicacion</b> y <b>Exist.</b> Con <b>Cost.medio</b> y <b>P.V.P.</b> también ves valores en pesos, pero quedan visibles para quien tenga el link. Antes de pegar, poné la columna Articulo en formato de texto: si no, Sheets convierte códigos como 3/07 en fechas.</p>`;
-  sec.innerHTML = `<div><h2>Planilla</h2><p class="lead">La app se conecta sola a la planilla de Google: lee los conteos cada 5 minutos y lo que se carga acá se copia a su pestaña App Conteos.</p></div>
+  sec.innerHTML = `<div><h2>Planilla</h2><p class="lead">La app se conecta sola a la planilla de Google: lee los conteos de todas sus pestañas cada minuto y lo que se carga acá se copia a su pestaña App Conteos.</p></div>
   <div class="cols2">
     <div class="drop"><h3>Conteos</h3><div id="ppan"></div></div>
     <div class="drop"><h3>Existencias del sistema</h3>${ex}</div>
   </div>
   <div id="prech"></div>
   <div class="panel"><div class="panel-head"><h3>Lecturas con cambios</h3></div><div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Origen</th><th>Resultado</th></tr></thead><tbody>
-  ${imps.map(i => `<tr><td class="mono">${esc(fF(i.creado))}</td><td>${i.tipo === 'existencias' ? 'Existencias' : 'Conteos'}</td><td class="small">${esc(i.archivo || '')}</td><td class="small">${i.tipo === 'existencias' ? `${nf0.format(i.total)} art.${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios)} cambios`}` : `${i.nuevas} nuevas · ${i.bajas || 0} quitadas · ${i.rechazadas} rechazadas`}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">Todavía no hubo lecturas</td></tr>'}
+  ${imps.map(i => `<tr><td class="mono">${esc(fF(i.creado))}</td><td>${i.tipo === 'existencias' ? 'Existencias' : 'Conteos'}</td><td class="small">${esc(i.archivo || '')}</td><td class="small">${i.tipo === 'existencias' ? `${nf0.format(i.total)} art.${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios)} cambios`}` : `${i.nuevas} nuevas · ${i.cambios ? i.cambios + ' corregidas · ' : ''}${i.bajas || 0} quitadas · ${i.rechazadas} rechazadas`}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">Todavía no hubo lecturas</td></tr>'}
   </tbody></table></div></div>`;
   panelPlanilla();
 }
@@ -1213,9 +1218,12 @@ async function sincronizarAhora() {
     const r = await api('sincronizar', {});
     await refrescar();
     const l = r.lectura;
-    if (!l) toast('La planilla ya se leyó hace un momento: lo que ves está al día.');
+    if (!l) toast('La planilla se leyó hace unos segundos. Si acabás de cambiar algo, probá de nuevo en un momento.');
     else if (!l.ok) toast(l.error || 'No se pudo leer la planilla.', 5000);
-    else toast(l.nuevas || l.bajas ? `Planilla actualizada: ${l.nuevas} nuevas, ${l.bajas} quitadas.` : 'Planilla actualizada: sin cambios.');
+    else {
+      const hubo = [[l.nuevas, 'nueva'], [l.cambios, 'corregida'], [l.bajas, 'quitada']].filter(p => p[0]).map(([n, t]) => `${n} ${t}${n === 1 ? '' : 's'}`);
+      toast(hubo.length ? `Planilla actualizada: ${hubo.join(', ')}.` : 'Planilla actualizada: sin cambios.');
+    }
   } catch (e) { toast(errMsg(e)); }
   finally { S.sincronizando = false; renderStatus(); panelPlanilla(); }
 }
@@ -1229,6 +1237,7 @@ function panelPlanilla() {
   el.innerHTML = `<p class="small" style="margin:0">${lectura}</p>
     ${p.ok === false ? `<div class="notice bad" style="margin-top:10px">${esc(p.error || 'No se pudo leer la planilla.')}</div>` : ''}
     ${(p.pestanas || []).length ? `<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Pestaña</th><th class="n">Líneas</th><th class="n">Rechazadas</th></tr></thead><tbody>${p.pestanas.map(t => `<tr><td class="small">${esc(t.nombre)}</td><td class="n">${nf0.format(t.lineas)}</td><td class="n">${nf0.format(t.rechazadas)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    ${(p.ignoradas || []).length ? `<div class="notice warn" style="margin-top:10px">No se leen porque no tienen las columnas <b>ID</b> y <b>Codigo</b>: ${p.ignoradas.map(esc).join(', ')}.</div>` : ''}
     ${salida}
     <div class="toolbar" style="margin-top:12px"><button class="btn" id="psync" ${S.sincronizando ? 'disabled' : ''}>${S.sincronizando ? 'Leyendo…' : 'Actualizar ahora'}</button></div>`;
   $('#psync').onclick = sincronizarAhora;
