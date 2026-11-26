@@ -142,6 +142,7 @@ button.link{background:none;border:0;color:var(--brand2);cursor:pointer;padding:
 .ev .ico{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:10.5px;font-weight:500}
 .ico.imp{background:var(--info-soft);color:var(--info)}.ico.cnt{background:var(--gold-soft);color:var(--gold-ink)}.ico.aj{background:var(--ok-soft);color:var(--ok)}.ico.an{background:var(--bad-soft);color:var(--bad)}
 @media (max-width:520px){.ev{grid-template-columns:26px minmax(0,1fr)}.ev .when{grid-column:2;order:3}}
+.lote-det{margin-top:6px}.lote-det summary{cursor:pointer;color:var(--info)}.lote-det .tbl-wrap{margin-top:6px}
 .more{display:flex;justify-content:center;padding:10px}
 .cb{width:16px;height:16px;accent-color:var(--brand)}
 .scan-wrap{display:flex;gap:8px;align-items:stretch}
@@ -1176,18 +1177,38 @@ function eventos() {
   if (S.foto0Meta) { const f0 = S.foto0Meta; ev.push({ t: f0.marcado, tipo: 'imp', ico: 'F0', txt: 'Guardó la foto 0 del relevamiento', det: `existencias al ${fF(f0.fechaDato)} · ${nf0.format(f0.total || 0)} artículos · ${f$(f0.valor)}`, u: f0.user }); }
   for (const a of S.ajustes) {
     if (a.cargado) ev.push({ t: a.cargadoEl, tipo: 'aj', ico: 'OK', txt: `Marcó como cargado en el sistema el lote del ${fF(a.creado)}`, det: `${a.lineas.length} ítems${a.nota ? ' · ' + a.nota : ''}`, u: a.cargadoPor });
-    ev.push({ t: a.creado, tipo: 'aj', ico: 'AJ', txt: `Cerró ${a.lineas.length} ítems en un lote de ajuste${a.nota ? ' · ' + a.nota : ''}`, det: `${a.lineas.filter(l => l[1] - l[2]).length} con diferencia · existencias al ${fF(a.fechaSistema)}`, u: a.user });
+    ev.push({ t: a.creado, tipo: 'aj', ico: 'AJ', txt: `Cerró ${a.lineas.length} ítems en un lote de ajuste${a.nota ? ' · ' + a.nota : ''}`, det: `${a.lineas.filter(l => l[1] - l[2]).length} con diferencia · existencias al ${fF(a.fechaSistema)}`, u: a.user, lote: a });
     if (a.anulado) ev.push({ t: a.anuladoEl, tipo: 'an', ico: 'AN', txt: `Anuló el lote de ajuste del ${fF(a.creado)}`, det: `${a.lineas.length} ítems volvieron a En curso`, u: a.anuladoPor });
   }
   return ev.filter(e => e.t).sort((a, b) => b.t.localeCompare(a.t));
 }
-function evHtml(e) { return `<div class="ev"><div class="when">${esc(fF(e.t))}</div><div class="ico ${e.tipo}">${e.ico}</div><div><div>${esc(e.txt)}</div><div class="small muted">${esc(e.det)}${e.u ? ' · ' + esc(nombre(e.u)) : ''}</div></div></div>`; }
+function evHtml(e) { return `<div class="ev"><div class="when">${esc(fF(e.t))}</div><div class="ico ${e.tipo}">${e.ico}</div><div><div>${esc(e.txt)}</div><div class="small muted">${esc(e.det)}${e.u ? ' · ' + esc(nombre(e.u)) : ''}</div>${e.lote ? detalleLote(e.lote) : ''}</div></div>`; }
+// Trazabilidad de un cierre: qué se contó, contra qué existencia y en qué quedó el lote.
+const estadoLote = a => a.anulado ? `Anulado el ${fF(a.anuladoEl)}` : a.cargado ? `Cargado en el sistema el ${fF(a.cargadoEl)}` : 'Sin cargar en el sistema';
+const descLote = l => l[5] || (S.maestro.get(l[0]) || {}).d || '';
+function detalleLote(a) {
+  const filas = a.lineas.map(l => { const d = l[1] - l[2]; return `<tr><td class="cod"><button class="link mono" data-c="${esc(l[0])}">${esc(l[0])}</button></td><td>${esc(descLote(l))}</td><td class="mono small">${esc(l[6] || '—')}</td><td class="n">${fN(l[1])}</td><td class="n">${fN(l[2])}</td><td class="n ${difCls(d)}">${fSign(d)}</td><td class="n ${difCls(d)}">${f$(d * (l[3] || 0))}</td></tr>`; }).join('');
+  return `<details class="lote-det"><summary class="small">Ver los ${a.lineas.length} artículos · ${esc(estadoLote(a))}</summary><div class="tbl-wrap"><table><thead><tr><th>Artículo</th><th>Descripción</th><th>Ubicaciones contadas</th><th class="n">Contado</th><th class="n">Sistema</th><th class="n">Diferencia</th><th class="n">Ajuste $</th></tr></thead><tbody>${filas}</tbody></table></div></details>`;
+}
+// Una fila por artículo y por lote: si un artículo se vuelve a cerrar, queda cada versión con su fecha.
+function exportarCierres() {
+  const lotes = S.ajustes.slice().sort((a, b) => a.creado.localeCompare(b.creado));
+  const filas = [['Fecha cierre', 'Lote', 'Nota', 'Cerrado por', 'Estado', 'Cargado el', 'Anulado el', 'Existencias al', 'Artículo', 'Descripción', 'Ubicaciones contadas', 'Contado', 'Sistema', 'Diferencia', 'Costo medio', 'Ajuste $']];
+  for (const a of lotes) for (const l of a.lineas) {
+    const d = l[1] - l[2];
+    filas.push([a.creado, a.id, a.nota || '', a.user || '', a.anulado ? 'Anulado' : a.cargado ? 'Cargado' : 'Sin cargar', a.cargado ? a.cargadoEl || '' : '', a.anulado ? a.anuladoEl || '' : '', a.fechaSistema || '', l[0], descLote(l), l[6] || '', l[1], l[2], d, l[3], Math.round(d * (l[3] || 0) * 100) / 100]);
+  }
+  exportar('historial_cierres_' + ahora().slice(0, 10) + '.xlsx', filas, 'Cierres', { 'Lotes': lotes.length, 'Artículos cerrados': filas.length - 1, 'Generado': ahora() });
+}
 function vHistorial(sec) {
   const F = S.ui.hiFiltro; const all = eventos(); const l = all.filter(e => F === 'todos' || e.tipo === F);
-  sec.innerHTML = `<div><h2>Historial</h2><p class="lead">Todo lo que pasó en el relevamiento: importaciones, sesiones de conteo, cierres y anulaciones. Nada se borra; las correcciones quedan registradas como anulaciones.</p></div>
-  <div class="chips">${[['todos', 'Todo'], ['imp', 'Importaciones'], ['cnt', 'Conteos'], ['aj', 'Cierres'], ['an', 'Anulaciones']].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${F === k}">${t}<span class="n">${k === 'todos' ? all.length : all.filter(e => e.tipo === k).length}</span></button>`).join('')}</div>
+  sec.innerHTML = `<div><h2>Historial</h2><p class="lead">Todo lo que pasó en el relevamiento: importaciones, sesiones de conteo, cierres y anulaciones. Nada se borra; las correcciones quedan registradas como anulaciones. En cada cierre podés ver los artículos con lo contado y la diferencia.</p></div>
+  <div class="toolbar" style="justify-content:space-between"><div class="chips">${[['todos', 'Todo'], ['imp', 'Importaciones'], ['cnt', 'Conteos'], ['aj', 'Cierres'], ['an', 'Anulaciones']].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${F === k}">${t}<span class="n">${k === 'todos' ? all.length : all.filter(e => e.tipo === k).length}</span></button>`).join('')}</div>
+  <button class="btn" id="hiexp" ${S.ajustes.length ? '' : 'disabled'}>Exportar cierres a Excel</button></div>
   <div class="panel"><div class="timeline">${l.slice(0, S.ui.hiLim).map(evHtml).join('') || '<div class="empty">Sin eventos</div>'}</div>${l.length > S.ui.hiLim ? '<div class="more"><button class="btn" id="himore">Ver más</button></div>' : ''}</div>`;
   sec.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.ui.hiFiltro = b.dataset.f; render(true); });
+  sec.querySelectorAll('button[data-c]').forEach(b => b.onclick = () => abrirItem(b.dataset.c));
+  $('#hiexp', sec).onclick = exportarCierres;
   const m = $('#himore', sec); if (m) m.onclick = () => { S.ui.hiLim += 200; render(true); };
 }
 
