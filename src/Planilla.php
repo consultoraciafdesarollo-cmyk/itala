@@ -114,12 +114,16 @@ final class Planilla
                             $nuevas++;
                             continue;
                         }
-                        // La clave no incluye producto ni estado, y una fila puede cambiar de
-                        // pestaña: la planilla manda en sus columnas. Las marcas de la app
-                        // (ticket, anulación) no están en la planilla y se conservan.
+                        // La clave no incluye producto, estado ni ticket, y una fila puede cambiar
+                        // de pestaña: la planilla manda en sus columnas. La anulación es solo de la
+                        // app y se conserva. El ticket marcado desde la app tampoco se pierde.
                         $antes = json_decode($previa['datos'], true);
+                        if (isset($l['et']) && !empty($antes['ett'])) {
+                            $l['et'] = true;
+                        }
                         $volvio = (int) $previa['eliminada'] === 1;
-                        $distinta = $previa['sesion_id'] !== $sid || $l['d'] !== ($antes['d'] ?? '') || $l['e'] !== ($antes['e'] ?? '');
+                        $distinta = $previa['sesion_id'] !== $sid || $l['d'] !== ($antes['d'] ?? '') || $l['e'] !== ($antes['e'] ?? '')
+                            || (isset($l['et']) && $l['et'] !== !empty($antes['et']));
                         if ($volvio || $distinta) {
                             $actualizar->execute([$sid, aJson($l + $antes), $l['k']]);
                             $volvio ? $nuevas++ : $cambios++;
@@ -222,15 +226,16 @@ final class Planilla
             }
 
             $snap = 'hoja-' . substr($huella, 0, 16);
+            $fechaDato = self::fechaDeNombre($hoja['nombre']) ?? $hoy;
             $doc = [
-                'tipo' => 'existencias', 'creado' => $hoy, 'user' => '', 'archivo' => $hoja['nombre'], 'fechaDato' => $hoy,
+                'tipo' => 'existencias', 'creado' => $hoy, 'user' => '', 'archivo' => $hoja['nombre'], 'fechaDato' => $fechaDato,
                 'snap' => $snap, 'total' => count($items), 'conStock' => $conStock, 'valor' => round($valor),
                 'nuevos' => $nuevos, 'bajas' => $bajas, 'cambios' => $cambios, 'base' => $base, 'duplicados' => $r['duplicados'],
             ];
             $pdo->prepare('INSERT INTO importaciones (id, tipo, creado, datos) VALUES (?, ?, ?, ?)')
                 ->execute([$impId, 'existencias', $hoy, aJson($doc)]);
             Datos::guardar('maestro', [
-                'snap' => $snap, 'huella' => $huella, 'total' => count($items), 'fechaDato' => $hoy,
+                'snap' => $snap, 'huella' => $huella, 'total' => count($items), 'fechaDato' => $fechaDato,
                 'archivo' => $hoja['nombre'], 'importacion' => $impId, 'actualizado' => $hoy,
             ]);
             Datos::tocar();
@@ -444,6 +449,7 @@ final class Planilla
         $iE = $col('/^estado/');
         $iU = $col('/^ubic/');
         $iF = $col('/^fecha/');
+        $iT = $col('/^ticket|^etiq/');
         $celda = fn (array $f, ?int $i) => $i === null ? null : ($f[$i] ?? null);
 
         $bloques = [];
@@ -474,6 +480,9 @@ final class Planilla
                 't' => self::fecha($celda($f, $iF)),
                 'r' => '',
             ];
+            if ($iT !== null) { // sin columna Ticket, el ticket solo se marca desde la app
+                $l['et'] = self::esSi($celda($f, $iT));
+            }
             $base = implode('|', [$l['c'], $l['b'], $l['q'], $l['u'], $l['t']]);
             $apariciones[$base] = ($apariciones[$base] ?? 0) + 1;
             $l = ['k' => 'x' . substr(sha1($base . '|' . $apariciones[$base]), 0, 20)] + $l;
@@ -520,6 +529,27 @@ final class Planilla
             $t = str_replace(',', '.', str_replace('.', '', $t));
         }
         return (float) $t;
+    }
+
+    public static function esSi($v): bool
+    {
+        return (bool) preg_match('/^(s[ií]?|x|ok|true|verdadero|1)$/u', mb_strtolower(self::texto($v)));
+    }
+
+    /** Fecha del informe tomada del nombre de la pestaña: "Existencias 25-11-2026", "Exist 25.11". */
+    public static function fechaDeNombre(string $nombre): ?string
+    {
+        if (!preg_match('#(?<!\d)(\d{1,2})[-/.](\d{1,2})(?:[-/.](\d{2}|\d{4}))?(?!\d)#', $nombre, $m)) {
+            return null;
+        }
+        $anio = isset($m[3]) ? (int) $m[3] : (int) date('Y');
+        if ($anio < 100) {
+            $anio += 2000;
+        }
+        if (!checkdate((int) $m[2], (int) $m[1], $anio)) {
+            return null;
+        }
+        return sprintf('%04d-%02d-%02d 00:00:00', $anio, $m[2], $m[1]);
     }
 
     public static function fecha($v): string
