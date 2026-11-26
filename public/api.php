@@ -70,6 +70,8 @@ try {
                 responder(Datos::foto0());
             case 'delta':
                 responder(Datos::delta((string) ($_GET['id'] ?? '')));
+            case 'lectura':
+                responder(Datos::lectura((string) ($_GET['id'] ?? '')));
         }
         fallar('accion_desconocida', 404);
     }

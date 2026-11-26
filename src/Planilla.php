@@ -77,6 +77,13 @@ final class Planilla
             foreach ($pdo->query("SELECT l.k, l.sesion_id, l.datos, l.eliminada FROM lineas l JOIN sesiones s ON s.id = l.sesion_id WHERE s.origen = 'planilla'") as $f) {
                 $previas[$f['k']] = $f;
             }
+            $pestanaDe = [];
+            foreach ($pdo->query("SELECT id, archivo FROM sesiones WHERE origen = 'planilla'") as $f) {
+                $pestanaDe[$f['id']] = $f['archivo'];
+            }
+            // Detalle de la lectura para el Historial: [tipo, clave, artículo, antes, después].
+            $detalle = [];
+            $vista = fn (array $l, string $pestana) => array_intersect_key($l, array_flip(['c', 'b', 'd', 'q', 'e', 'u', 't', 'et', 'f'])) + ['hoja' => $pestana];
 
             $apariciones = [];
             $vistas = [];
@@ -112,6 +119,7 @@ final class Planilla
                         if ($previa === null) {
                             $altaLinea->execute([$l['k'], $sid, $l['c'], aJson($l)]);
                             $nuevas++;
+                            $detalle[] = ['nueva', $l['k'], $l['c'], null, $vista($l, $hoja['nombre'])];
                             continue;
                         }
                         // La clave no incluye producto, estado, ticket ni hora del conteo, y una fila puede cambiar
@@ -127,6 +135,10 @@ final class Planilla
                         if ($volvio || $distinta) {
                             $actualizar->execute([$sid, aJson($l + $antes), $l['k']]);
                             $volvio ? $nuevas++ : $cambios++;
+                            $detalle[] = [$volvio ? 'volvio' : 'cambio', $l['k'], $l['c'], $vista($antes, $pestanaDe[$previa['sesion_id']] ?? ''), $vista($l + $antes, $hoja['nombre'])];
+                        } elseif (($antes['f'] ?? null) !== $l['f']) {
+                            // Solo se movió de fila (se insertaron o borraron filas arriba): se anota sin contarlo como cambio.
+                            $actualizar->execute([$sid, aJson($l + $antes), $l['k']]);
                         }
                     }
                 }
@@ -144,10 +156,12 @@ final class Planilla
             if ($ausentes) {
                 $enCierre = self::lineasEnCierres($pdo);
                 $baja = $pdo->prepare('UPDATE lineas SET eliminada = 1 WHERE k = ?');
-                foreach (array_keys($ausentes) as $k) {
+                foreach ($ausentes as $k => $p) {
                     if (!isset($enCierre[$k])) {
                         $baja->execute([$k]);
                         $bajas++;
+                        $antes = json_decode($p['datos'], true);
+                        $detalle[] = ['baja', $k, $antes['c'] ?? '', $vista($antes, $pestanaDe[$p['sesion_id']] ?? ''), null];
                     }
                 }
             }
@@ -164,9 +178,18 @@ final class Planilla
                 $doc = [
                     'tipo' => 'relevamiento', 'creado' => $hoy, 'user' => '', 'archivo' => 'Google Sheets',
                     'nuevas' => $nuevas, 'bajas' => $bajas, 'cambios' => $cambios, 'duplicadas' => 0, 'rechazadas' => count($rechazadas),
+                    'detalle' => true,
                 ];
+                $impId = 'imp-hoja-' . bin2hex(random_bytes(6));
                 $pdo->prepare('INSERT INTO importaciones (id, tipo, creado, datos) VALUES (?, ?, ?, ?)')
-                    ->execute(['imp-hoja-' . bin2hex(random_bytes(6)), 'relevamiento', $hoy, aJson($doc)]);
+                    ->execute([$impId, 'relevamiento', $hoy, aJson($doc)]);
+                $det = $pdo->prepare('INSERT INTO lectura_cambios (imp_id, tipo, k, c, antes, despues) VALUES (?, ?, ?, ?, ?, ?)');
+                foreach ($detalle as [$tipo, $k, $c, $a, $d]) {
+                    $det->execute([$impId, $tipo, $k, $c, $a === null ? null : aJson($a), $d === null ? null : aJson($d)]);
+                }
+                foreach (array_slice($rechazadas, 0, 500) as $r) {
+                    $det->execute([$impId, 'rechazada', '', $r['c'], null, aJson(['hoja' => $r['hoja'], 'f' => $r['fila'], 'd' => $r['d'], 'q' => $r['q'], 'motivo' => $r['motivo']])]);
+                }
                 Datos::tocar();
             }
             return $estado;
@@ -485,6 +508,7 @@ final class Planilla
                 'u' => mb_strtoupper(self::texto($celda($f, $iU))),
                 't' => $t !== '' ? $t : $tClave,
                 'r' => '',
+                'f' => $n, // fila de la planilla, para la trazabilidad
             ];
             if ($iT !== null) { // sin columna Ticket, el ticket solo se marca desde la app
                 $l['et'] = self::esSi($celda($f, $iT));

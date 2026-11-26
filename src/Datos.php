@@ -104,6 +104,18 @@ final class Datos
         return ['rows' => $st->fetchAll(PDO::FETCH_NUM)];
     }
 
+    /** Detalle de una lectura de la planilla: [tipo, clave, artículo, antes, después]. */
+    public static function lectura(string $id): array
+    {
+        $st = db()->prepare('SELECT tipo, k, c, antes, despues FROM lectura_cambios WHERE imp_id = ? ORDER BY rowid');
+        $st->execute([self::id($id)]);
+        $rows = [];
+        foreach ($st as $f) {
+            $rows[] = [$f['tipo'], $f['k'], $f['c'], $f['antes'] === null ? null : json_decode($f['antes'], true), $f['despues'] === null ? null : json_decode($f['despues'], true)];
+        }
+        return ['rows' => $rows];
+    }
+
     // ---------- Existencias ----------
 
     public static function guardarFoto0(array $b): array

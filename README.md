@@ -11,6 +11,7 @@ PHP 8.2 sin framework ni dependencias, con SQLite. Las pantallas son `public/ind
 - **Existencias (opcional):** una pestaña con encabezado `Articulo`. Sin ella, la app muestra solo conteos y oculta valores, Cierres y Foto 0.
 - **Lo cargado en la app:** se guarda en la base y sale por una cola hacia la pestaña `App Conteos`, mediante un Apps Script (`apps-script/`). Si Google falla, la cola reintenta sola.
 - **A la planilla nunca van costos ni cierres.**
+- **Trazabilidad:** cada actualización del Historial es una ejecución y se exporta a Excel con su detalle. Las lecturas de la planilla con cambios guardan qué línea entró, cambió o salió, con el valor anterior y el nuevo (tabla `lectura_cambios`, desde el 26/11/2026). Cada conteo guarda su fila de la planilla.
 
 La app no tiene login: cualquiera con la URL ve los datos y carga conteos. Por eso el sitio no se indexa y la base se respalda todos los días.
 

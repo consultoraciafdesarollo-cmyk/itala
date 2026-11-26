@@ -143,6 +143,7 @@ button.link{background:none;border:0;color:var(--brand2);cursor:pointer;padding:
 .ico.imp{background:var(--info-soft);color:var(--info)}.ico.cnt{background:var(--gold-soft);color:var(--gold-ink)}.ico.aj{background:var(--ok-soft);color:var(--ok)}.ico.an{background:var(--bad-soft);color:var(--bad)}
 @media (max-width:520px){.ev{grid-template-columns:26px minmax(0,1fr)}.ev .when{grid-column:2;order:3}}
 .lote-det{margin-top:6px}.lote-det summary{cursor:pointer;color:var(--info)}.lote-det .tbl-wrap{margin-top:6px}
+.ev-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}.ev-sel{display:flex;gap:8px;align-items:flex-start;cursor:pointer}.ev-sel input{margin-top:4px;flex:none}
 .more{display:flex;justify-content:center;padding:10px}
 .cb{width:16px;height:16px;accent-color:var(--brand)}
 .scan-wrap{display:flex;gap:8px;align-items:stretch}
@@ -294,7 +295,7 @@ const S = {
   uid: '', canWrite: true, listo: false, version: -1,
   meta: null, maestro: new Map(), maestroSnap: null, planilla: null, cola: null,
   sesiones: [], ajustes: [], importaciones: [], foto0Meta: null, foto0: new Map(), foto0Snap: null, cons: null, filas: [], porCod: new Map(), equiv: new Map(),
-  view: 'resumen', ui: { itFiltro: 'stock', itQ: '', itLim: 200, itSort: 'auto', ajSel: new Set(), ajQ: '', ajSoloDif: false, eqFiltro: 'todas', eqQ: '', hiFiltro: 'todos', hiLim: 80, f0Filtro: 'aj', f0Q: '', f0Lim: 300 },
+  view: 'resumen', ui: { itFiltro: 'stock', itQ: '', itLim: 200, itSort: 'auto', ajSel: new Set(), ajQ: '', ajSoloDif: false, eqFiltro: 'todas', eqQ: '', hiFiltro: 'todos', hiLim: 80, hiSel: new Set(), hiQ: '', hiDesde: '', hiHasta: '', f0Filtro: 'aj', f0Q: '', f0Lim: 300 },
   carga: { item: null, bar: '', cands: [], q: '' }, timer: null, error: ''
 };
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -1023,11 +1024,17 @@ function modalLote(a) {
   $('#mdl').onclick = () => descargarLote(a); $('#mok').onclick = () => L.innerHTML = '';
 }
 async function exportar(nombreArch, aoa, hoja, meta) {
+  return exportarHojas(nombreArch, [[hoja, aoa], ...(meta ? [['Datos', Object.entries(meta), false]] : [])]);
+}
+// hojas: [[nombre, filas, anchos automáticos (por defecto sí)], ...]
+async function exportarHojas(nombreArch, hojas) {
   try {
-    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = aoa[0].map((h, i) => ({ wch: Math.min(40, Math.max(String(h).length + 2, ...aoa.slice(1, 200).map(r => String(r[i] ?? '').length + 1))) }));
-    XLSX.utils.book_append_sheet(wb, ws, hoja);
-    if (meta) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(Object.entries(meta)), 'Datos');
+    const wb = XLSX.utils.book_new();
+    for (const [hoja, aoa, anchos] of hojas) {
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      if (anchos !== false) ws['!cols'] = aoa[0].map((h, i) => ({ wch: Math.min(40, Math.max(String(h).length + 2, ...aoa.slice(1, 200).map(r => String(r[i] ?? '').length + 1))) }));
+      XLSX.utils.book_append_sheet(wb, ws, hoja.slice(0, 31));
+    }
     const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
     const url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
     const a = document.createElement('a'); a.href = url; a.download = nombreArch; document.body.appendChild(a); a.click(); a.remove();
@@ -1163,26 +1170,34 @@ function vEquiv(sec) {
 }
 
 // ================== Vista: Historial ==================
+// Cada actualización del Historial es una ejecución: tiene un id estable (para elegirla y exportarla),
+// la referencia a sus datos (x) y, cuando se conocen acá, los artículos que toca (cods).
+const pl = (n, uno, varios) => `${nf0.format(n)} ${n === 1 ? uno : varios}`;
 function eventos() {
   const ev = [];
   for (const i of S.importaciones) {
-    if (i.tipo === 'existencias') ev.push({ t: i.creado, tipo: 'imp', ico: 'EX', txt: `Actualizó existencias del sistema al ${fF(i.fechaDato)}`, det: `${i.archivo || ''} · ${nf0.format(i.total || 0)} artículos${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios || 0)} con cambios de existencia, ${nf0.format(i.nuevos || 0)} nuevos, ${nf0.format(i.bajas || 0)} dados de baja`}`, u: i.user });
-    else ev.push({ t: i.creado, tipo: 'imp', ico: 'RV', txt: `Leyó conteos de la planilla`, det: `${i.nuevas} líneas nuevas · ${i.cambios ? i.cambios + ' corregidas · ' : ''}${i.bajas || 0} quitadas · ${i.rechazadas} rechazadas`, u: i.user });
+    if (i.tipo === 'existencias') ev.push({ id: 'imp:' + i.id, t: i.creado, tipo: 'imp', ico: 'EX', txt: `Actualizó existencias del sistema al ${fF(i.fechaDato)}`, det: `${i.archivo || ''} · ${nf0.format(i.total || 0)} artículos${i.base ? ' · base inicial' : ` · ${nf0.format(i.cambios || 0)} con cambios de existencia, ${nf0.format(i.nuevos || 0)} nuevos, ${nf0.format(i.bajas || 0)} dados de baja`}`, u: i.user, x: { k: 'exist', imp: i } });
+    else ev.push({ id: 'imp:' + i.id, t: i.creado, tipo: 'imp', ico: 'RV', txt: `Leyó conteos de la planilla`, det: `${i.nuevas} líneas nuevas · ${i.cambios ? i.cambios + ' corregidas · ' : ''}${i.bajas || 0} quitadas · ${i.rechazadas} rechazadas`, u: i.user, x: { k: 'lectura', imp: i } });
   }
   for (const s of S.sesiones) {
     const ls = s.lineas || [];
-    if (s.origen === 'app') ev.push({ t: s.creado, tipo: 'cnt', ico: 'CT', txt: `Sesión de conteo en la app${s.responsable ? ' · ' + s.responsable : ''}`, det: `${ls.filter(l => !l.x).length} líneas · ubicaciones ${[...new Set(ls.map(l => l.u))].slice(0, 8).join(', ')} · última ${fF(s.actualizado)}`, u: s.user });
-    for (const l of ls) if (l.x) ev.push({ t: l.xt, tipo: 'an', ico: 'AN', txt: `Anuló un conteo de ${l.c}`, det: `${fN(l.q)} u. en ${l.u} del ${fF(l.t)}`, u: l.xu });
+    if (s.origen === 'app') ev.push({ id: 'ses:' + s.id, t: s.creado, tipo: 'cnt', ico: 'CT', txt: `Sesión de conteo en la app${s.responsable ? ' · ' + s.responsable : ''}`, det: `${ls.filter(l => !l.x).length} líneas · ubicaciones ${[...new Set(ls.map(l => l.u))].slice(0, 8).join(', ')} · última ${fF(s.actualizado)}`, u: s.user, x: { k: 'sesion', se: s }, cods: ls.map(l => l.c) });
+    for (const l of ls) if (l.x) ev.push({ id: 'anl:' + l.k, t: l.xt, tipo: 'an', ico: 'AN', txt: `Anuló un conteo de ${l.c}`, det: `${fN(l.q)} u. en ${l.u} del ${fF(l.t)}`, u: l.xu, x: { k: 'linea', l, se: s }, cods: [l.c] });
   }
-  if (S.foto0Meta) { const f0 = S.foto0Meta; ev.push({ t: f0.marcado, tipo: 'imp', ico: 'F0', txt: 'Guardó la foto 0 del relevamiento', det: `existencias al ${fF(f0.fechaDato)} · ${nf0.format(f0.total || 0)} artículos · ${f$(f0.valor)}`, u: f0.user }); }
+  if (S.foto0Meta) { const f0 = S.foto0Meta; ev.push({ id: 'f0:' + f0.id, t: f0.marcado, tipo: 'imp', ico: 'F0', txt: 'Guardó la foto 0 del relevamiento', det: `existencias al ${fF(f0.fechaDato)} · ${nf0.format(f0.total || 0)} artículos · ${f$(f0.valor)}`, u: f0.user, x: { k: 'foto0' } }); }
   for (const a of S.ajustes) {
-    if (a.cargado) ev.push({ t: a.cargadoEl, tipo: 'aj', ico: 'OK', txt: `Marcó como cargado en el sistema el lote del ${fF(a.creado)}`, det: `${a.lineas.length} ítems${a.nota ? ' · ' + a.nota : ''}`, u: a.cargadoPor });
-    ev.push({ t: a.creado, tipo: 'aj', ico: 'AJ', txt: `Cerró ${a.lineas.length} ítems en un lote de ajuste${a.nota ? ' · ' + a.nota : ''}`, det: `${a.lineas.filter(l => l[1] - l[2]).length} con diferencia · existencias al ${fF(a.fechaSistema)}`, u: a.user, lote: a });
-    if (a.anulado) ev.push({ t: a.anuladoEl, tipo: 'an', ico: 'AN', txt: `Anuló el lote de ajuste del ${fF(a.creado)}`, det: `${a.lineas.length} ítems volvieron a En curso`, u: a.anuladoPor });
+    const cods = a.lineas.map(l => l[0]);
+    if (a.cargado) ev.push({ id: 'ajc:' + a.id, t: a.cargadoEl, tipo: 'aj', ico: 'OK', txt: `Marcó como cargado en el sistema el lote del ${fF(a.creado)}`, det: `${pl(a.lineas.length, 'ítem', 'ítems')}${a.nota ? ' · ' + a.nota : ''}`, u: a.cargadoPor, x: { k: 'lote', a, accion: 'Marcó el lote como cargado' }, cods });
+    ev.push({ id: 'aj:' + a.id, t: a.creado, tipo: 'aj', ico: 'AJ', txt: `Cerró ${pl(a.lineas.length, 'ítem', 'ítems')} en un lote de ajuste${a.nota ? ' · ' + a.nota : ''}`, det: `${a.lineas.filter(l => l[1] - l[2]).length} con diferencia · existencias al ${fF(a.fechaSistema)}`, u: a.user, lote: a, x: { k: 'lote', a, accion: 'Cerró el lote' }, cods });
+    if (a.anulado) ev.push({ id: 'ajx:' + a.id, t: a.anuladoEl, tipo: 'an', ico: 'AN', txt: `Anuló el lote de ajuste del ${fF(a.creado)}`, det: `${pl(a.lineas.length, 'ítem volvió', 'ítems volvieron')} a En curso`, u: a.anuladoPor, x: { k: 'lote', a, accion: 'Anuló el lote' }, cods });
   }
   return ev.filter(e => e.t).sort((a, b) => b.t.localeCompare(a.t));
 }
-function evHtml(e) { return `<div class="ev"><div class="when">${esc(fF(e.t))}</div><div class="ico ${e.tipo}">${e.ico}</div><div><div>${esc(e.txt)}</div><div class="small muted">${esc(e.det)}${e.u ? ' · ' + esc(nombre(e.u)) : ''}</div>${e.lote ? detalleLote(e.lote) : ''}</div></div>`; }
+function evHtml(e) {
+  return `<div class="ev"><div class="when">${esc(fF(e.t))}</div><div class="ico ${e.tipo}">${e.ico}</div><div>
+    <div class="ev-head"><label class="ev-sel"><input type="checkbox" data-sel="${esc(e.id)}" ${S.ui.hiSel.has(e.id) ? 'checked' : ''} aria-label="Elegir esta ejecución para exportar"><span>${esc(e.txt)}</span></label><button class="btn sm" data-xl="${esc(e.id)}" title="Bajar el Excel de esta ejecución con todo su detalle">Excel</button></div>
+    <div class="small muted">${esc(e.det)}${e.u ? ' · ' + esc(nombre(e.u)) : ''}</div>${e.lote ? detalleLote(e.lote) : ''}</div></div>`;
+}
 // Trazabilidad de un cierre: qué se contó, contra qué existencia y en qué quedó el lote.
 const estadoLote = a => a.anulado ? `Anulado el ${fF(a.anuladoEl)}` : a.cargado ? `Cargado en el sistema el ${fF(a.cargadoEl)}` : 'Sin cargar en el sistema';
 const descLote = l => l[5] || (S.maestro.get(l[0]) || {}).d || '';
@@ -1190,25 +1205,126 @@ function detalleLote(a) {
   const filas = a.lineas.map(l => { const d = l[1] - l[2]; return `<tr><td class="cod"><button class="link mono" data-c="${esc(l[0])}">${esc(l[0])}</button></td><td>${esc(descLote(l))}</td><td class="mono small">${esc(l[6] || '—')}</td><td class="n">${fN(l[1])}</td><td class="n">${fN(l[2])}</td><td class="n ${difCls(d)}">${fSign(d)}</td><td class="n ${difCls(d)}">${f$(d * (l[3] || 0))}</td></tr>`; }).join('');
   return `<details class="lote-det"><summary class="small">Ver los ${a.lineas.length} artículos · ${esc(estadoLote(a))}</summary><div class="tbl-wrap"><table><thead><tr><th>Artículo</th><th>Descripción</th><th>Ubicaciones contadas</th><th class="n">Contado</th><th class="n">Sistema</th><th class="n">Diferencia</th><th class="n">Ajuste $</th></tr></thead><tbody>${filas}</tbody></table></div></details>`;
 }
-// Una fila por artículo y por lote: si un artículo se vuelve a cerrar, queda cada versión con su fecha.
-function exportarCierres() {
-  const lotes = S.ajustes.slice().sort((a, b) => a.creado.localeCompare(b.creado));
-  const filas = [['Fecha cierre', 'Lote', 'Nota', 'Cerrado por', 'Estado', 'Cargado el', 'Anulado el', 'Existencias al', 'Artículo', 'Descripción', 'Ubicaciones contadas', 'Contado', 'Sistema', 'Diferencia', 'Costo medio', 'Ajuste $']];
-  for (const a of lotes) for (const l of a.lineas) {
-    const d = l[1] - l[2];
-    filas.push([a.creado, a.id, a.nota || '', a.user || '', a.anulado ? 'Anulado' : a.cargado ? 'Cargado' : 'Sin cargar', a.cargado ? a.cargadoEl || '' : '', a.anulado ? a.anuladoEl || '' : '', a.fechaSistema || '', l[0], descLote(l), l[6] || '', l[1], l[2], d, l[3], Math.round(d * (l[3] || 0) * 100) / 100]);
+// ---------- Exportación por ejecución ----------
+// Un libro con una hoja por tipo de dato. Cada fila lleva la fecha y la ejecución de la que sale.
+const TIPO_EJ = { EX: 'Existencias', RV: 'Lectura de la planilla', CT: 'Conteo en la app', AN: 'Anulación', F0: 'Foto 0', AJ: 'Cierre', OK: 'Lote cargado' };
+const CAMBIO = { nueva: 'Entró', cambio: 'Cambió', volvio: 'Volvió a aparecer', baja: 'Salió de la planilla', rechazada: 'Rechazada' };
+const CAMPOS_LINEA = [['d', 'Producto'], ['q', 'Cantidad'], ['u', 'Ubicación'], ['e', 'Estado'], ['t', 'Fecha y hora'], ['et', 'Ticket nuevo'], ['b', 'Código impreso'], ['hoja', 'Pestaña'], ['f', 'Fila']];
+const SINO = v => v ? 'SÍ' : 'NO';
+const valCampo = (k, v) => k === 'et' ? SINO(v) : v == null || v === '' ? '—' : String(v);
+function queCambio(a, d) {
+  if (!a || !d) return '';
+  return CAMPOS_LINEA.filter(([k]) => {
+    if ((k === 'f' && a.f == null) || (k === 'hoja' && !a.hoja)) return false; // dato que antes no se guardaba
+    return k === 'et' ? !!a.et !== !!d.et : String(a[k] ?? '') !== String(d[k] ?? '');
+  }).map(([k, n]) => `${n}: ${valCampo(k, a[k])} → ${valCampo(k, d[k])}`).join(' · ');
+}
+async function libroEjecuciones(evs, q) {
+  const H = {
+    ej: [['Fecha', 'Tipo', 'Qué pasó', 'Detalle', 'Por', 'Id de la ejecución']],
+    cierres: [['Fecha de la ejecución', 'Ejecución', 'Lote', 'Nota', 'Estado actual del lote', 'Cerrado el', 'Cerrado por', 'Cargado el', 'Cargado por', 'Anulado el', 'Anulado por', 'Existencias al', 'Artículo', 'Descripción', 'Contado (total)', 'Sistema', 'Diferencia', 'Costo medio', 'Ajuste $', 'Conteo: fecha y hora', 'Conteo: ubicación', 'Conteo: cantidad', 'Conteo: código impreso', 'Conteo: ticket nuevo', 'Conteo: origen', 'Conteo: pestaña', 'Conteo: fila', 'Conteo: anulado el', 'Clave del conteo']],
+    lecturas: [['Fecha de la lectura', 'Lectura', 'Cambio', 'Artículo', 'Qué cambió (antes → después)', 'Producto', 'Cantidad', 'Ubicación', 'Estado', 'Fecha y hora del conteo', 'Ticket nuevo', 'Pestaña', 'Fila', 'Motivo del rechazo', 'Clave del conteo']],
+    exist: [['Fecha de la carga', 'Informe', 'Existencias al', 'Artículo', 'Descripción', 'Antes', 'Después', 'Diferencia']],
+    conteos: [['Fecha de la sesión', 'Sesión', 'Responsable', 'Por', 'Artículo', 'Descripción', 'Ubicación', 'Cantidad', 'Código impreso', 'Ticket nuevo', 'Fecha y hora', 'Anulado el', 'Anulado por', 'Clave del conteo']],
+    anul: [['Fecha de la anulación', 'Por', 'Artículo', 'Descripción', 'Ubicación', 'Cantidad', 'Fecha y hora del conteo', 'Origen', 'Pestaña', 'Fila', 'Clave del conteo']],
+    foto0: [['Artículo', 'Descripción', 'Existencia', 'Costo medio', 'Valor']]
+  };
+  const ok = (c, d) => !q || (String(c || '') + ' ' + (d || '')).toUpperCase().includes(q);
+  const desc = c => (S.maestro.get(c) || {}).d || '';
+  const porClave = new Map(); for (const se of S.sesiones) for (const l of (se.lineas || [])) porClave.set(l.k, { l, se });
+  const pestana = se => se.origen === 'app' ? 'App' : se.archivo || '';
+  const $r = v => Math.round(v * 100) / 100;
+  for (const e of evs) {
+    H.ej.push([e.t, TIPO_EJ[e.ico] || e.ico, e.txt, e.det, e.u || '', e.id]);
+    const x = e.x;
+    if (x.k === 'lote') {
+      const a = x.a;
+      for (const li of a.lineas) {
+        if (!ok(li[0], descLote(li))) continue;
+        const d = li[1] - li[2];
+        const base = [e.t, x.accion, a.id, a.nota || '', a.anulado ? 'Anulado' : a.cargado ? 'Cargado' : 'Sin cargar', a.creado, a.user || '', a.cargado ? a.cargadoEl || '' : '', a.cargado ? a.cargadoPor || '' : '', a.anulado ? a.anuladoEl || '' : '', a.anulado ? a.anuladoPor || '' : '', a.fechaSistema || '', li[0], descLote(li), li[1], li[2], d, li[3], $r(d * (li[3] || 0))];
+        const claves = li[4] || [];
+        if (!claves.length) H.cierres.push(base.concat(['', '', '', '', '', '', '', '', '', '']));
+        for (const k of claves) {
+          const r = porClave.get(k);
+          H.cierres.push(base.concat(r ? [r.l.t, r.l.u, r.l.q, r.l.b || '', SINO(r.l.et), r.se.origen === 'app' ? 'App' : 'Planilla', pestana(r.se), r.l.f || '', r.l.x ? r.l.xt || 'SÍ' : '', k] : ['', '', '', '', '', '', '', '', '', k + ' (no encontrada)']));
+        }
+      }
+    } else if (x.k === 'lectura') {
+      const i = x.imp;
+      if (!i.detalle) { H.lecturas.push([e.t, i.id, 'Sin detalle', '', `Lectura anterior al registro del detalle: ${i.nuevas} nuevas, ${i.cambios || 0} corregidas, ${i.bajas || 0} quitadas, ${i.rechazadas} rechazadas`, '', '', '', '', '', '', '', '', '', '']); continue; }
+      const { rows } = await api('lectura', undefined, '&id=' + encodeURIComponent(i.id));
+      for (const [tipo, k, c, a, d] of rows) {
+        const v = d || a || {};
+        if (!ok(c, v.d)) continue;
+        H.lecturas.push([e.t, i.id, CAMBIO[tipo] || tipo, c, tipo === 'cambio' || tipo === 'volvio' ? queCambio(a, d) : '', v.d || '', v.q ?? '', v.u || '', v.e || '', v.t || '', tipo === 'rechazada' ? '' : SINO(v.et), v.hoja || '', v.f || '', v.motivo || '', k || '']);
+      }
+    } else if (x.k === 'exist') {
+      const i = x.imp;
+      if (i.base) { H.exist.push([e.t, i.archivo || '', i.fechaDato || '', '', `Base inicial: ${nf0.format(i.total || 0)} artículos, sin detalle de cambios`, '', '', '']); continue; }
+      const { rows } = await api('delta', undefined, '&id=' + encodeURIComponent(i.id));
+      for (const [c, antes, despues] of rows) if (ok(c, desc(c))) H.exist.push([e.t, i.archivo || '', i.fechaDato || '', c, desc(c), antes ?? '(no estaba)', despues ?? '(ya no está)', (despues || 0) - (antes || 0)]);
+    } else if (x.k === 'sesion') {
+      for (const l of (x.se.lineas || [])) if (ok(l.c, l.d || desc(l.c))) H.conteos.push([e.t, x.se.id, x.se.responsable || '', x.se.user || '', l.c, l.d || desc(l.c), l.u || '', l.q, l.b || '', SINO(l.et), l.t || '', l.x ? l.xt || 'SÍ' : '', l.x ? l.xu || '' : '', l.k]);
+    } else if (x.k === 'linea') {
+      const l = x.l;
+      if (ok(l.c, l.d || desc(l.c))) H.anul.push([e.t, l.xu || '', l.c, l.d || desc(l.c), l.u || '', l.q, l.t || '', x.se.origen === 'app' ? 'App' : 'Planilla', pestana(x.se), l.f || '', l.k]);
+    } else if (x.k === 'foto0') {
+      for (const [c, it] of S.foto0) if (ok(c, it.d)) H.foto0.push([c, it.d || '', it.x, it.co, $r(Math.max(it.x, 0) * (it.co || 0))]);
+    }
   }
-  exportar('historial_cierres_' + ahora().slice(0, 10) + '.xlsx', filas, 'Cierres', { 'Lotes': lotes.length, 'Artículos cerrados': filas.length - 1, 'Generado': ahora() });
+  const nombres = [['cierres', 'Cierres'], ['lecturas', 'Lecturas de la planilla'], ['exist', 'Existencias'], ['conteos', 'Conteos en la app'], ['anul', 'Anulaciones de conteos'], ['foto0', 'Foto 0']];
+  return [['Ejecuciones', H.ej], ...nombres.filter(([k]) => H[k].length > 1).map(([k, n]) => [n, H[k]]),
+    ['Filtros', [['Generado', ahora()], ['Desde', S.ui.hiDesde || 'Sin límite'], ['Hasta', S.ui.hiHasta || 'Sin límite'], ['Artículo', q || 'Todos'], ['Ejecuciones', evs.length]], false]];
+}
+async function exportarEjecuciones(evs) {
+  if (!evs.length) return;
+  const q = S.ui.hiQ.trim().toUpperCase();
+  toast(evs.length === 1 ? 'Armando el Excel de la ejecución…' : `Armando el Excel de ${evs.length} ejecuciones…`, 1800);
+  try {
+    const hojas = await libroEjecuciones(evs.slice().sort((a, b) => a.t.localeCompare(b.t)), q);
+    const e = evs[0];
+    const nombreArch = evs.length === 1 ? `ejecucion_${e.t.slice(0, 10)}_${(TIPO_EJ[e.ico] || e.ico).toLowerCase().replace(/\W+/g, '_')}_${e.id.slice(-5)}.xlsx` : `historial_${ahora().slice(0, 10)}_${evs.length}_ejecuciones.xlsx`;
+    await exportarHojas(nombreArch, hojas);
+  } catch (err) { toast(errMsg(err), 5000); }
+}
+function eventosFiltrados() {
+  const q = S.ui.hiQ.trim().toUpperCase(), de = S.ui.hiDesde, ha = S.ui.hiHasta;
+  const todos = eventos();
+  const vis = todos.filter(e => (!de || e.t.slice(0, 10) >= de) && (!ha || e.t.slice(0, 10) <= ha)
+    && (!q || !e.cods || e.cods.some(c => (c + ' ' + ((S.maestro.get(c) || {}).d || '')).toUpperCase().includes(q))));
+  return { todos, vis };
 }
 function vHistorial(sec) {
-  const F = S.ui.hiFiltro; const all = eventos(); const l = all.filter(e => F === 'todos' || e.tipo === F);
-  sec.innerHTML = `<div><h2>Historial</h2><p class="lead">Todo lo que pasó en el relevamiento: importaciones, sesiones de conteo, cierres y anulaciones. Nada se borra; las correcciones quedan registradas como anulaciones. En cada cierre podés ver los artículos con lo contado y la diferencia.</p></div>
-  <div class="toolbar" style="justify-content:space-between"><div class="chips">${[['todos', 'Todo'], ['imp', 'Importaciones'], ['cnt', 'Conteos'], ['aj', 'Cierres'], ['an', 'Anulaciones']].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${F === k}">${t}<span class="n">${k === 'todos' ? all.length : all.filter(e => e.tipo === k).length}</span></button>`).join('')}</div>
-  <button class="btn" id="hiexp" ${S.ajustes.length ? '' : 'disabled'}>Exportar cierres a Excel</button></div>
-  <div class="panel"><div class="timeline">${l.slice(0, S.ui.hiLim).map(evHtml).join('') || '<div class="empty">Sin eventos</div>'}</div>${l.length > S.ui.hiLim ? '<div class="more"><button class="btn" id="himore">Ver más</button></div>' : ''}</div>`;
+  const F = S.ui.hiFiltro; const { todos, vis } = eventosFiltrados(); const l = vis.filter(e => F === 'todos' || e.tipo === F);
+  for (const id of [...S.ui.hiSel]) if (!todos.some(e => e.id === id)) S.ui.hiSel.delete(id);
+  const nSel = S.ui.hiSel.size;
+  sec.innerHTML = `<div><h2>Historial</h2><p class="lead">Cada actualización es una ejecución: lecturas de la planilla, cargas de existencias, conteos, cierres, lotes cargados, anulaciones y la Foto 0. Nada se borra. Elegí las ejecuciones y bajá su Excel con todo el detalle: cada conteo con su hora, ubicación, pestaña y fila, y cada cambio con el valor anterior y el nuevo.</p></div>
+  <div class="chips">${[['todos', 'Todo'], ['imp', 'Importaciones'], ['cnt', 'Conteos'], ['aj', 'Cierres'], ['an', 'Anulaciones']].map(([k, t]) => `<button class="chip" data-f="${k}" aria-pressed="${F === k}">${t}<span class="n">${k === 'todos' ? vis.length : vis.filter(e => e.tipo === k).length}</span></button>`).join('')}</div>
+  <div class="toolbar">
+    <label class="small">Desde <input type="date" id="hide" value="${esc(S.ui.hiDesde)}"></label>
+    <label class="small">Hasta <input type="date" id="hiha" value="${esc(S.ui.hiHasta)}"></label>
+    <input class="search" id="hiq" type="search" placeholder="Filtrar por artículo (código o descripción)" value="${esc(S.ui.hiQ)}">
+  </div>
+  <div class="toolbar" style="justify-content:space-between">
+    <div class="toolbar"><button class="btn sm" id="hiall" ${l.length ? '' : 'disabled'}>Elegir ${pl(l.length, 'visible', 'visibles')}</button><button class="btn sm" id="hinone" ${nSel ? '' : 'disabled'}>Limpiar selección</button></div>
+    <button class="btn primary" id="hiexp" ${nSel ? '' : 'disabled'}>Exportar ${pl(nSel, 'ejecución elegida', 'ejecuciones elegidas')}</button>
+  </div>
+  ${S.ui.hiQ.trim() ? '<p class="small muted" style="margin:0">El filtro por artículo también se aplica al Excel. Las lecturas de la planilla, las cargas de existencias y la Foto 0 siguen en la lista: en su Excel quedan solo las filas de ese artículo.</p>' : ''}
+  <div class="panel"><div class="timeline">${l.slice(0, S.ui.hiLim).map(evHtml).join('') || '<div class="empty">Sin ejecuciones con esos filtros</div>'}</div>${l.length > S.ui.hiLim ? '<div class="more"><button class="btn" id="himore">Ver más</button></div>' : ''}</div>`;
+  const porId = new Map(todos.map(e => [e.id, e]));
+  const btnExp = $('#hiexp', sec);
+  const marcarSel = () => { const n = S.ui.hiSel.size; btnExp.disabled = !n; btnExp.textContent = `Exportar ${pl(n, 'ejecución elegida', 'ejecuciones elegidas')}`; $('#hinone', sec).disabled = !n; };
   sec.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.ui.hiFiltro = b.dataset.f; render(true); });
   sec.querySelectorAll('button[data-c]').forEach(b => b.onclick = () => abrirItem(b.dataset.c));
-  $('#hiexp', sec).onclick = exportarCierres;
+  sec.querySelectorAll('[data-sel]').forEach(cb => cb.onchange = () => { cb.checked ? S.ui.hiSel.add(cb.dataset.sel) : S.ui.hiSel.delete(cb.dataset.sel); marcarSel(); });
+  sec.querySelectorAll('[data-xl]').forEach(b => b.onclick = async () => { b.disabled = true; await exportarEjecuciones([porId.get(b.dataset.xl)].filter(Boolean)); b.disabled = false; });
+  $('#hiall', sec).onclick = () => { l.forEach(e => S.ui.hiSel.add(e.id)); render(true); };
+  $('#hinone', sec).onclick = () => { S.ui.hiSel.clear(); render(true); };
+  btnExp.onclick = async () => { btnExp.disabled = true; await exportarEjecuciones([...S.ui.hiSel].map(id => porId.get(id)).filter(Boolean)); marcarSel(); };
+  $('#hide', sec).onchange = e => { S.ui.hiDesde = e.target.value; render(true); };
+  $('#hiha', sec).onchange = e => { S.ui.hiHasta = e.target.value; render(true); };
+  let deb; $('#hiq', sec).oninput = e => { clearTimeout(deb); deb = setTimeout(() => { S.ui.hiQ = e.target.value; S.ui.hiLim = 80; renderKeepFocus('#hiq'); }, 250); };
   const m = $('#himore', sec); if (m) m.onclick = () => { S.ui.hiLim += 200; render(true); };
 }
 

@@ -23,6 +23,11 @@ $pasos = [
     2 => [
         'DROP TABLE IF EXISTS articulos_carga', // el maestro ya no se carga desde la web
     ],
+    3 => [
+        // Detalle de cada lectura de la planilla con cambios: qué línea entró, cambió o salió, antes y después.
+        'CREATE TABLE IF NOT EXISTS lectura_cambios (imp_id TEXT NOT NULL, tipo TEXT NOT NULL, k TEXT, c TEXT, antes TEXT, despues TEXT)',
+        'CREATE INDEX IF NOT EXISTS ix_lectura_cambios_imp ON lectura_cambios (imp_id)',
+    ],
 ];
 
 $pdo = db();
