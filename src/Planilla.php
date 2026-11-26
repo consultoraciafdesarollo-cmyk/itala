@@ -114,7 +114,7 @@ final class Planilla
                             $nuevas++;
                             continue;
                         }
-                        // La clave no incluye producto, estado ni ticket, y una fila puede cambiar
+                        // La clave no incluye producto, estado, ticket ni hora del conteo, y una fila puede cambiar
                         // de pestaña: la planilla manda en sus columnas. La anulación es solo de la
                         // app y se conserva. El ticket marcado desde la app tampoco se pierde.
                         $antes = json_decode($previa['datos'], true);
@@ -123,7 +123,7 @@ final class Planilla
                         }
                         $volvio = (int) $previa['eliminada'] === 1;
                         $distinta = $previa['sesion_id'] !== $sid || $l['d'] !== ($antes['d'] ?? '') || $l['e'] !== ($antes['e'] ?? '')
-                            || (isset($l['et']) && $l['et'] !== !empty($antes['et']));
+                            || $l['t'] !== ($antes['t'] ?? '') || (isset($l['et']) && $l['et'] !== !empty($antes['et']));
                         if ($volvio || $distinta) {
                             $actualizar->execute([$sid, aJson($l + $antes), $l['k']]);
                             $volvio ? $nuevas++ : $cambios++;
@@ -448,7 +448,11 @@ final class Planilla
         $iQ = $col('/^cant/');
         $iE = $col('/^estado/');
         $iU = $col('/^ubic/');
+        // La clave de cada fila usa la primera columna de fecha, como siempre: cambiarla
+        // cambiaría la identidad de las filas ya leídas y desarmaría los cierres. Lo que se
+        // muestra es la hora del conteo: "Fecha y Hora", no "Fecha y Hora de Guardado".
         $iF = $col('/^fecha/');
+        $iH = $col('/^fecha(?!.*guardad)/u') ?? $iF;
         $iT = $col('/^ticket|^etiq/');
         $celda = fn (array $f, ?int $i) => $i === null ? null : ($f[$i] ?? null);
 
@@ -470,6 +474,8 @@ final class Planilla
                 continue;
             }
             $total++;
+            $tClave = self::fecha($celda($f, $iF));
+            $t = self::fecha($celda($f, $iH));
             $l = [
                 'c' => mb_strtoupper($id),
                 'b' => preg_replace('/\s+/', '', self::texto($celda($f, $iB))),
@@ -477,13 +483,13 @@ final class Planilla
                 'q' => self::numero($celda($f, $iQ)),
                 'e' => self::texto($celda($f, $iE)),
                 'u' => mb_strtoupper(self::texto($celda($f, $iU))),
-                't' => self::fecha($celda($f, $iF)),
+                't' => $t !== '' ? $t : $tClave,
                 'r' => '',
             ];
             if ($iT !== null) { // sin columna Ticket, el ticket solo se marca desde la app
                 $l['et'] = self::esSi($celda($f, $iT));
             }
-            $base = implode('|', [$l['c'], $l['b'], $l['q'], $l['u'], $l['t']]);
+            $base = implode('|', [$l['c'], $l['b'], $l['q'], $l['u'], $tClave]);
             $apariciones[$base] = ($apariciones[$base] ?? 0) + 1;
             $l = ['k' => 'x' . substr(sha1($base . '|' . $apariciones[$base]), 0, 20)] + $l;
 
