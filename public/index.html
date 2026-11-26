@@ -131,6 +131,7 @@ button.link{background:none;border:0;color:var(--brand2);cursor:pointer;padding:
 .drawer-bg{position:fixed;inset:0;background:rgba(5,12,22,.45);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--bg);z-index:21;overflow:auto;border-left:1px solid var(--line);padding:calc(16px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(30px + env(safe-area-inset-bottom,0px)) 18px;display:flex;flex-direction:column;gap:14px}
 .drawer .close{position:sticky;top:0;align-self:flex-end}
+.drawer.ancho{width:min(1280px,100%)}.prev-tabla{max-height:62vh;overflow:auto}.prev-tabla td,.prev-tabla th{white-space:nowrap}
 .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 32px));max-height:85vh;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);z-index:31;padding:18px;display:flex;flex-direction:column;gap:12px}
 .modal-bg{position:fixed;inset:0;background:rgba(5,12,22,.5);z-index:30}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:var(--r);z-index:40;font-size:13.5px;max-width:calc(100% - 32px)}
@@ -1195,7 +1196,7 @@ function eventos() {
 }
 function evHtml(e) {
   return `<div class="ev"><div class="when">${esc(fF(e.t))}</div><div class="ico ${e.tipo}">${e.ico}</div><div>
-    <div class="ev-head"><label class="ev-sel"><input type="checkbox" data-sel="${esc(e.id)}" ${S.ui.hiSel.has(e.id) ? 'checked' : ''} aria-label="Elegir esta ejecución para exportar"><span>${esc(e.txt)}</span></label><button class="btn sm" data-xl="${esc(e.id)}" title="Bajar el Excel de esta ejecución con todo su detalle">Excel</button></div>
+    <div class="ev-head"><label class="ev-sel"><input type="checkbox" data-sel="${esc(e.id)}" ${S.ui.hiSel.has(e.id) ? 'checked' : ''} aria-label="Elegir esta ejecución para exportar"><span>${esc(e.txt)}</span></label><div class="toolbar" style="flex:none;gap:6px"><button class="btn sm" data-ver="${esc(e.id)}" title="Ver el contenido del Excel antes de bajarlo">Ver</button><button class="btn sm" data-xl="${esc(e.id)}" title="Bajar el Excel de esta ejecución con todo su detalle">Excel</button></div></div>
     <div class="small muted">${esc(e.det)}${e.u ? ' · ' + esc(nombre(e.u)) : ''}</div>${e.lote ? detalleLote(e.lote) : ''}</div></div>`;
 }
 // Trazabilidad de un cierre: qué se contó, contra qué existencia y en qué quedó el lote.
@@ -1277,16 +1278,46 @@ async function libroEjecuciones(evs, q) {
   return [['Ejecuciones', H.ej], ...nombres.filter(([k]) => H[k].length > 1).map(([k, n]) => [n, H[k]]),
     ['Filtros', [['Generado', ahora()], ['Desde', S.ui.hiDesde || 'Sin límite'], ['Hasta', S.ui.hiHasta || 'Sin límite'], ['Artículo', q || 'Todos'], ['Ejecuciones', evs.length]], false]];
 }
+const nombreLibro = evs => { const e = evs[0]; return evs.length === 1 ? `ejecucion_${e.t.slice(0, 10)}_${(TIPO_EJ[e.ico] || e.ico).toLowerCase().replace(/\W+/g, '_')}_${e.id.slice(-5)}.xlsx` : `historial_${ahora().slice(0, 10)}_${evs.length}_ejecuciones.xlsx`; };
+const libroDe = evs => libroEjecuciones(evs.slice().sort((a, b) => a.t.localeCompare(b.t)), S.ui.hiQ.trim().toUpperCase());
 async function exportarEjecuciones(evs) {
   if (!evs.length) return;
-  const q = S.ui.hiQ.trim().toUpperCase();
   toast(evs.length === 1 ? 'Armando el Excel de la ejecución…' : `Armando el Excel de ${evs.length} ejecuciones…`, 1800);
-  try {
-    const hojas = await libroEjecuciones(evs.slice().sort((a, b) => a.t.localeCompare(b.t)), q);
-    const e = evs[0];
-    const nombreArch = evs.length === 1 ? `ejecucion_${e.t.slice(0, 10)}_${(TIPO_EJ[e.ico] || e.ico).toLowerCase().replace(/\W+/g, '_')}_${e.id.slice(-5)}.xlsx` : `historial_${ahora().slice(0, 10)}_${evs.length}_ejecuciones.xlsx`;
-    await exportarHojas(nombreArch, hojas);
-  } catch (err) { toast(errMsg(err), 5000); }
+  try { await exportarHojas(nombreLibro(evs), await libroDe(evs)); } catch (err) { toast(errMsg(err), 5000); }
+}
+// Vista previa: las mismas hojas que el Excel, en un panel. Desde ahí se baja sin volver a armarlo.
+const PREV_FILAS = 300;
+async function previsualizarEjecuciones(evs) {
+  if (!evs.length) return;
+  const L = $('#layer');
+  const titulo = evs.length === 1 ? evs[0].txt : `${evs.length} ejecuciones elegidas`;
+  L.innerHTML = `<div class="drawer-bg" id="pbg"></div><aside class="drawer ancho" role="dialog" aria-modal="true" aria-label="Vista previa del Excel"><button class="btn sm close" id="pclose">Cerrar</button><div><div class="label">Vista previa del Excel</div><h2>${esc(titulo)}</h2></div><div class="empty">Armando la vista previa…</div></aside>`;
+  const cerrar = () => { L.innerHTML = ''; document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') cerrar(); };
+  document.addEventListener('keydown', onKey);
+  $('#pbg').onclick = cerrar; $('#pclose').onclick = cerrar;
+  let hojas;
+  try { hojas = await libroDe(evs); } catch (err) { cerrar(); toast(errMsg(err), 5000); return; }
+  if (!$('#pclose')) return; // se cerró mientras se armaba
+  let act = hojas.length > 2 ? 1 : 0; // la primera hoja con datos; si no hay, Ejecuciones
+  const celda = v => typeof v === 'number' ? `<td class="n">${esc(nf2.format(v))}</td>` : `<td>${esc(v ?? '')}</td>`;
+  const pintar = () => {
+    const [nom, aoa, conEncabezado] = hojas[act];
+    const enc = conEncabezado === false ? null : aoa[0];
+    const cuerpo = enc ? aoa.slice(1) : aoa;
+    const vis = cuerpo.slice(0, PREV_FILAS);
+    $('.drawer', L).innerHTML = `<button class="btn sm close" id="pclose">Cerrar</button>
+      <div><div class="label">Vista previa del Excel</div><h2>${esc(titulo)}</h2>
+      <p class="small muted" style="margin:4px 0 0">${esc(nombreLibro(evs))}${S.ui.hiQ.trim() ? ` · filtrado por artículo «${esc(S.ui.hiQ.trim())}»` : ''}</p></div>
+      <div class="toolbar" style="justify-content:space-between"><div class="chips">${hojas.map((h, i) => `<button class="chip" data-hoja="${i}" aria-pressed="${i === act}">${esc(h[0])}<span class="n">${nf0.format(h[2] === false ? h[1].length : h[1].length - 1)}</span></button>`).join('')}</div>
+      <button class="btn primary" id="pbajar">Descargar Excel</button></div>
+      <div class="tbl-wrap prev-tabla"><table>${enc ? `<thead><tr>${enc.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>` : ''}<tbody>${vis.map(r => `<tr>${r.map(celda).join('')}</tr>`).join('') || `<tr><td class="empty" colspan="${enc ? enc.length : 2}">Sin filas</td></tr>`}</tbody></table></div>
+      ${cuerpo.length > vis.length ? `<p class="small muted" style="margin:0">Se muestran las primeras ${nf0.format(PREV_FILAS)} filas de ${nf0.format(cuerpo.length)}. El Excel trae todas.</p>` : ''}`;
+    $('#pclose').onclick = cerrar;
+    L.querySelectorAll('[data-hoja]').forEach(b => b.onclick = () => { act = +b.dataset.hoja; pintar(); });
+    $('#pbajar').onclick = () => exportarHojas(nombreLibro(evs), hojas);
+  };
+  pintar();
 }
 function eventosFiltrados() {
   const q = S.ui.hiQ.trim().toUpperCase(), de = S.ui.hiDesde, ha = S.ui.hiHasta;
@@ -1308,20 +1339,23 @@ function vHistorial(sec) {
   </div>
   <div class="toolbar" style="justify-content:space-between">
     <div class="toolbar"><button class="btn sm" id="hiall" ${l.length ? '' : 'disabled'}>Elegir ${pl(l.length, 'visible', 'visibles')}</button><button class="btn sm" id="hinone" ${nSel ? '' : 'disabled'}>Limpiar selección</button></div>
-    <button class="btn primary" id="hiexp" ${nSel ? '' : 'disabled'}>Exportar ${pl(nSel, 'ejecución elegida', 'ejecuciones elegidas')}</button>
+    <div class="toolbar"><button class="btn" id="hiver" ${nSel ? '' : 'disabled'}>Ver elegidas</button><button class="btn primary" id="hiexp" ${nSel ? '' : 'disabled'}>Exportar ${pl(nSel, 'ejecución elegida', 'ejecuciones elegidas')}</button></div>
   </div>
   ${S.ui.hiQ.trim() ? '<p class="small muted" style="margin:0">El filtro por artículo también se aplica al Excel. Las lecturas de la planilla, las cargas de existencias y la Foto 0 siguen en la lista: en su Excel quedan solo las filas de ese artículo.</p>' : ''}
   <div class="panel"><div class="timeline">${l.slice(0, S.ui.hiLim).map(evHtml).join('') || '<div class="empty">Sin ejecuciones con esos filtros</div>'}</div>${l.length > S.ui.hiLim ? '<div class="more"><button class="btn" id="himore">Ver más</button></div>' : ''}</div>`;
   const porId = new Map(todos.map(e => [e.id, e]));
   const btnExp = $('#hiexp', sec);
-  const marcarSel = () => { const n = S.ui.hiSel.size; btnExp.disabled = !n; btnExp.textContent = `Exportar ${pl(n, 'ejecución elegida', 'ejecuciones elegidas')}`; $('#hinone', sec).disabled = !n; };
+  const elegidas = () => [...S.ui.hiSel].map(id => porId.get(id)).filter(Boolean);
+  const marcarSel = () => { const n = S.ui.hiSel.size; btnExp.disabled = !n; btnExp.textContent = `Exportar ${pl(n, 'ejecución elegida', 'ejecuciones elegidas')}`; $('#hinone', sec).disabled = !n; $('#hiver', sec).disabled = !n; };
+  sec.querySelectorAll('[data-ver]').forEach(b => b.onclick = () => previsualizarEjecuciones([porId.get(b.dataset.ver)].filter(Boolean)));
+  $('#hiver', sec).onclick = () => previsualizarEjecuciones(elegidas());
   sec.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.ui.hiFiltro = b.dataset.f; render(true); });
   sec.querySelectorAll('button[data-c]').forEach(b => b.onclick = () => abrirItem(b.dataset.c));
   sec.querySelectorAll('[data-sel]').forEach(cb => cb.onchange = () => { cb.checked ? S.ui.hiSel.add(cb.dataset.sel) : S.ui.hiSel.delete(cb.dataset.sel); marcarSel(); });
   sec.querySelectorAll('[data-xl]').forEach(b => b.onclick = async () => { b.disabled = true; await exportarEjecuciones([porId.get(b.dataset.xl)].filter(Boolean)); b.disabled = false; });
   $('#hiall', sec).onclick = () => { l.forEach(e => S.ui.hiSel.add(e.id)); render(true); };
   $('#hinone', sec).onclick = () => { S.ui.hiSel.clear(); render(true); };
-  btnExp.onclick = async () => { btnExp.disabled = true; await exportarEjecuciones([...S.ui.hiSel].map(id => porId.get(id)).filter(Boolean)); marcarSel(); };
+  btnExp.onclick = async () => { btnExp.disabled = true; await exportarEjecuciones(elegidas()); marcarSel(); };
   $('#hide', sec).onchange = e => { S.ui.hiDesde = e.target.value; render(true); };
   $('#hiha', sec).onchange = e => { S.ui.hiHasta = e.target.value; render(true); };
   let deb; $('#hiq', sec).oninput = e => { clearTimeout(deb); deb = setTimeout(() => { S.ui.hiQ = e.target.value; S.ui.hiLim = 80; renderKeepFocus('#hiq'); }, 250); };
