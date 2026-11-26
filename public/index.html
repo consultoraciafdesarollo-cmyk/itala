@@ -1048,7 +1048,8 @@ async function exportarHojas(nombreArch, hojas) {
 // Todo se valoriza al costo medio actual para que el puente cierre exacto.
 function conciliacion() {
   const f0 = S.foto0Meta; if (!f0) return null;
-  const lotes = S.ajustes.filter(a => !a.anulado && a.creado >= f0.marcado);
+  // Entran al puente los lotes cerrados desde el inicio de la Foto 0: el que se fijó al guardarla o, si no, cuando se guardó.
+  const lotes = S.ajustes.filter(a => !a.anulado && a.creado >= (f0.desde || f0.marcado));
   const aj = new Map();
   for (const a of lotes) for (const l of a.lineas) { let o = aj.get(l[0]); if (!o) { o = { carg: 0, pend: 0 }; aj.set(l[0], o); } o[a.cargado ? 'carg' : 'pend'] += l[1] - l[2]; }
   const cods = new Set([...S.foto0.keys(), ...S.maestro.keys(), ...aj.keys()]);
@@ -1133,7 +1134,7 @@ function vFoto0(sec) {
   ${vis.map(r => `<tr class="click" data-c="${esc(r.c)}"><td class="cod">${esc(r.c)}</td><td>${esc(r.d)}</td><td class="n">${fN(r.x0)}</td><td class="n">${r.rel == null ? '—' : fN(r.rel)}</td><td class="n">${sd(r.carg)}</td><td class="n">${sd(r.pend)}</td><td class="n">${r.mov ? fSign(r.mov) : '0'}</td><td class="n">${fN(r.xa)}</td><td class="n ${difCls(r.carg + r.pend)}">${f$((r.carg + r.pend) * r.co)}</td><td>${estadoPill(r.f.estado ? r.f : { estado: 'pendiente' })}</td></tr>`).join('') || '<tr><td colspan="10" class="empty">No hay artículos con ese filtro</td></tr>'}
   </tbody></table></div>
   ${lista.length > vis.length ? `<div class="more"><button class="btn" id="f0more">Mostrar ${nf0.format(Math.min(500, lista.length - vis.length))} más</button></div>` : ''}
-  <div class="small muted">Foto 0 guardada el ${esc(fF(f0.marcado))} por ${esc(nombre(f0.user))} desde ${esc(f0.archivo || 'el informe vigente')}. ${S.canWrite ? '<button class="link" id="f0repl">Reemplazar la foto 0 por las existencias actuales</button>' : ''}</div>`);
+  <div class="small muted">Foto 0 guardada el ${esc(fF(f0.marcado))} por ${esc(nombre(f0.user))} desde ${esc(f0.archivo || 'el informe vigente')}.${f0.desde ? ` Cuenta los lotes cerrados desde el ${esc(fF(f0.desde))}.` : ''} ${S.canWrite ? '<button class="link" id="f0repl">Reemplazar la foto 0 por las existencias actuales</button>' : ''}</div>`);
   let deb; $('#f0q', sec).oninput = e => { clearTimeout(deb); deb = setTimeout(() => { S.ui.f0Q = e.target.value; S.ui.f0Lim = 300; renderKeepFocus('#f0q'); }, 220); };
   sec.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { S.ui.f0Filtro = b.dataset.f; S.ui.f0Lim = 300; render(true); });
   sec.querySelectorAll('tr[data-c]').forEach(tr => tr.onclick = () => abrirItem(tr.dataset.c));

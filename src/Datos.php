@@ -126,7 +126,9 @@ final class Datos
         if (!is_array($items) || !is_array($meta) || count($items) > 60000) {
             throw new DatoInvalido('invalid_argument');
         }
-        tx(function (PDO $pdo) use ($id, $items, $meta) {
+        // Opcional: desde cuándo cuentan los lotes en el puente, si no es el momento de guardarla.
+        $desde = ($meta['desde'] ?? '') === '' ? '' : self::fecha($meta['desde']);
+        tx(function (PDO $pdo) use ($id, $items, $meta, $desde) {
             $pdo->exec('DELETE FROM foto0_items');
             $st = $pdo->prepare('INSERT OR REPLACE INTO foto0_items (c, x, co, d) VALUES (?, ?, ?, ?)');
             foreach ($items as $it) {
@@ -136,7 +138,7 @@ final class Datos
                 'id' => $id, 'total' => count($items), 'fechaDato' => self::texto($meta['fechaDato'] ?? '', 25),
                 'archivo' => self::texto($meta['archivo'] ?? '', 200), 'importacion' => self::texto($meta['importacion'] ?? '', 64),
                 'marcado' => ahora(), 'user' => self::texto($meta['user'] ?? '', 80), 'valor' => self::numero($meta['valor'] ?? 0),
-            ]);
+            ] + ($desde !== '' ? ['desde' => $desde] : []));
             self::tocar();
         });
         return ['ok' => true];
